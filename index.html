@@ -358,6 +358,7 @@
       <div class="field"><input type="text" id="licCodigoInput" placeholder="Código de cliente" style="text-align:center;letter-spacing:1px;"></div>
       <button class="btn btn-save btn-block" onclick="activarConCodigo()">Ingresar</button>
       <div id="licErrorCodigo" style="color:var(--rojo);font-size:12.5px;margin-top:10px;min-height:16px;"></div>
+      <div style="font-size:12px;color:var(--texto-suave);margin-top:6px;cursor:pointer;text-decoration:underline;" onclick="mostrarPasoActivar()">¿No tenés cuenta? Empezá gratis</div>
     </div>
 
     <div id="licPasoBloqueado" style="display:none;">
@@ -1104,6 +1105,7 @@ renderHistorial();
     document.getElementById('licPasoCargando').style.display = paso==='cargando' ? 'block' : 'none';
   }
   window.mostrarPasoCodigo = function(){ mostrarPaso('codigo'); }
+  window.mostrarPasoActivar = function(){ mostrarPaso('activar'); }
 
   function estaVencido(fechaVencimiento){
     if(!fechaVencimiento) return true;
@@ -1125,34 +1127,17 @@ renderHistorial();
   }
 
   async function verificarLicencia(){
-    const clienteId = licStore.get('licencia_clienteId', null);
-    if(!clienteId){
-      document.getElementById('licenciaOverlay').style.display = 'flex';
-      mostrarPaso('activar');
-      return;
-    }
-    mostrarPaso('cargando');
+    // Siempre pedimos el código al abrir el link: no hay ingreso automático
+    // guardado de una vez para siempre. El único dato que persiste es el
+    // último código usado, para prellenar el campo (comodidad), pero
+    // SIEMPRE hay que confirmar tocando "Ingresar".
     document.getElementById('licenciaOverlay').style.display = 'flex';
-    try{
-      const snap = await getDoc(doc(db, 'clientes', clienteId));
-      if(!snap.exists()){
-        licStore.set('licencia_clienteId', null);
-        mostrarPaso('activar');
-        document.getElementById('licError').textContent = 'Código no encontrado, probá de nuevo';
-        return;
-      }
-      const data = snap.data();
-      licStore.set('licencia_cache', data);
-      aplicarEstadoCliente(data);
-    } catch(err){
-      // Sin conexión: usamos el último estado guardado si existe
-      const cache = licStore.get('licencia_cache', null);
-      if(cache){
-        aplicarEstadoCliente(cache);
-      } else {
-        mostrarPaso('activar');
-        document.getElementById('licError').textContent = 'Sin conexión, probá cuando tengas internet';
-      }
+    const ultimoCodigo = licStore.get('licencia_clienteId', '');
+    if(ultimoCodigo){
+      document.getElementById('licCodigoInput').value = ultimoCodigo;
+      mostrarPaso('codigo');
+    } else {
+      mostrarPaso('activar');
     }
   }
 
@@ -1169,7 +1154,6 @@ renderHistorial();
       const inicio = new Date();
       const vencimiento = new Date();
       vencimiento.setDate(vencimiento.getDate() + 3);
-      // collection, addDoc y Timestamp ya están importados arriba
       const nuevoDoc = await addDoc(collection(db, 'clientes'), {
         nombreNegocio: nombre,
         contacto: contacto,
@@ -1253,4 +1237,4 @@ renderHistorial();
   }
 </script>
 </body>
-</html>
+                                       </html>
