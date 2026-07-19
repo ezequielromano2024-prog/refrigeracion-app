@@ -1,0 +1,15 @@
+{
+  "name": "Panel Madre - Gestión Refrigeración",
+  "short_name": "Panel Madre",
+  "start_url": "./panel-madre.html",
+  "display": "standalone",
+  "background_color": "#0f1417",
+  "theme_color": "#0f1417",
+  "icons": [
+    {
+      "src": "icono-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
