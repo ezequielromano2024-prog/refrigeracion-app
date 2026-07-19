@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Gestión Refrigeración</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a2f4e">
+<link rel="icon" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --azul-profundo:#0A2F4E; --azul-medio:#155A8A; --azul-brillante:#1E88C7;
+    --celeste-hielo:#7FE0F0; --celeste-suave:#EAF7FB; --fondo:#F4FAFC; --blanco:#FFFFFF;
+    --texto:#1C2B36; --texto-suave:#5B7180; --verde:#1F9E5C; --verde-bg:#E4F7EC;
+    --rojo:#D64545; --rojo-bg:#FBEAEA; --ambar:#F2994A; --ambar-bg:#FDF1E6; --borde:#D7E8EF;
+    --radio:14px; --sombra:0 8px 24px rgba(10,47,78,.08);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--fondo);color:var(--texto);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,.display{font-family:'Sora',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  .topbar{background:linear-gradient(135deg,var(--azul-profundo),var(--azul-medio) 70%);color:#fff;padding:20px 18px 22px;position:relative;overflow:hidden;}
+  .topbar::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(127,224,240,.35),transparent 70%);}
+  .brand-row{display:flex;align-items:center;gap:12px;position:relative;z-index:1;}
+  .brand-logo{width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px solid rgba(255,255,255,.25);cursor:pointer;}
+  .brand-logo img{width:100%;height:100%;object-fit:cover;}
+  .brand-logo svg{width:24px;height:24px;opacity:.85;}
+  .brand-name{font-family:'Sora',sans-serif;font-weight:700;font-size:17px;line-height:1.15;}
+  .brand-sub{font-size:11.5px;color:var(--celeste-hielo);cursor:pointer;text-decoration:underline dotted;}
+  .install-btn{margin-left:auto;display:none;align-items:center;gap:6px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;padding:9px 12px;border-radius:10px;cursor:pointer;white-space:nowrap;flex-shrink:0;position:relative;z-index:1;}
+  .install-btn:active{background:rgba(255,255,255,.28);}
+  .install-btn svg{width:15px;height:15px;flex-shrink:0;}
+
+  .tabs{display:flex;gap:6px;padding:12px 10px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab-btn{flex:0 0 auto;padding:10px 12px;border:1px solid var(--borde);border-bottom:none;background:var(--blanco);color:var(--texto-suave);font-family:'Sora',sans-serif;font-weight:600;font-size:12.5px;border-radius:10px 10px 0 0;cursor:pointer;white-space:nowrap;}
+  .tab-btn.active{background:var(--celeste-suave);color:var(--azul-profundo);}
+
+  .wrap{max-width:820px;margin:0 auto;padding:0 10px 60px;}
+  .panel{background:var(--blanco);border:1px solid var(--borde);border-radius:0 12px 12px 12px;padding:18px 14px;box-shadow:var(--sombra);}
+  section.hidden{display:none;}
+
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--texto-suave);margin-bottom:5px;}
+  .field .opt{font-weight:400;color:#9AAAB4;}
+  input[type=text],input[type=number],input[type=date],input[type=time],input[type=tel],textarea,select{
+    width:100%;padding:11px 12px;border:1.5px solid var(--borde);border-radius:10px;font-family:'Inter',sans-serif;font-size:14.5px;color:var(--texto);background:var(--fondo);
+  }
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--azul-brillante);background:#fff;}
+  textarea{resize:vertical;min-height:56px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  h2.section-title{font-size:15.5px;color:var(--azul-profundo);margin:0 0 14px;display:flex;align-items:center;gap:8px;}
+  h2.section-title .dot{width:8px;height:8px;border-radius:50%;background:var(--celeste-hielo);flex-shrink:0;}
+
+  .btn{padding:13px 10px;border:none;border-radius:12px;font-family:'Sora',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;}
+  .btn-row{display:flex;gap:10px;margin-top:14px;}
+  .btn-block{width:100%;margin-top:6px;}
+  .btn-pdf{background:var(--azul-profundo);color:#fff;}
+  .btn-wsp{background:#25D366;color:#fff;}
+  .btn-save{background:var(--celeste-suave);color:var(--azul-profundo);border:1.5px solid var(--celeste-hielo);}
+  .btn-ghost{background:none;border:1.5px dashed var(--azul-brillante);color:var(--azul-medio);}
+
+  .item-row{display:grid;grid-template-columns:1fr 60px 90px 28px;gap:8px;align-items:center;margin-bottom:8px;}
+  .item-row input{padding:9px 10px;font-size:13.5px;}
+  .item-del{background:var(--rojo-bg);color:var(--rojo);border:none;border-radius:8px;height:36px;font-size:16px;cursor:pointer;}
+
+  .totales{background:var(--celeste-suave);border-radius:12px;padding:14px;margin-top:14px;}
+  .tot-line{display:flex;justify-content:space-between;font-size:14px;padding:4px 0;color:var(--texto-suave);}
+  .tot-line.final{font-size:19px;font-weight:700;color:var(--azul-profundo);border-top:1px solid var(--borde);margin-top:6px;padding-top:10px;}
+
+  .card-item{display:flex;gap:12px;padding:13px 12px;border:1px solid var(--borde);border-radius:12px;margin-bottom:9px;background:#fff;align-items:flex-start;}
+  .card-title{font-weight:700;font-size:14.5px;color:var(--azul-profundo);}
+  .card-meta{font-size:12.5px;color:var(--texto-suave);margin-top:2px;line-height:1.5;}
+  .badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;font-family:'Sora',sans-serif;}
+  .badge.verde{background:var(--verde-bg);color:var(--verde);}
+  .badge.rojo{background:var(--rojo-bg);color:var(--rojo);}
+  .badge.ambar{background:var(--ambar-bg);color:var(--ambar);}
+  .badge.azul{background:var(--celeste-suave);color:var(--azul-medio);}
+  .tag{display:inline-block;background:var(--celeste-suave);color:var(--azul-medio);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;margin-right:6px;}
+  .card-del{background:none;border:none;color:#B7C4CC;font-size:18px;cursor:pointer;padding:4px;}
+  .empty{text-align:center;color:var(--texto-suave);padding:36px 20px;font-size:13.5px;}
+
+  select.estado-select{width:auto;padding:6px 10px;font-size:12px;font-weight:700;border-radius:20px;}
+  .tec-chip{display:inline-flex;align-items:center;gap:6px;background:var(--celeste-suave);color:var(--azul-profundo);padding:6px 10px;border-radius:20px;font-size:13px;font-weight:600;margin:4px 6px 0 0;}
+  .tec-chip button{background:none;border:none;color:var(--rojo);font-weight:700;cursor:pointer;font-size:13px;}
+  .tec-daily-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:9px 0;border-bottom:1px solid var(--borde);}
+  .tec-daily-row:last-child{border-bottom:none;}
+  .tec-daily-row label{font-weight:600;font-size:14px;color:var(--texto);flex:0 0 100%;}
+  .tec-daily-row input{flex:1;min-width:0;padding:8px 10px;}
+  .resumen-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--borde);font-size:14px;}
+  .resumen-row:last-child{border-bottom:none;font-weight:700;color:var(--azul-profundo);}
+
+  .save-toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--azul-profundo);color:#fff;padding:12px 20px;border-radius:30px;font-size:13.5px;font-weight:600;box-shadow:0 10px 24px rgba(10,47,78,.3);transition:transform .3s ease;z-index:50;}
+  .save-toast.show{transform:translateX(-50%) translateY(0);}
+  .stock-qty-btn{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--borde);background:#fff;font-size:16px;font-weight:700;cursor:pointer;color:var(--azul-medio);}
+  .stock-qty{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:16px;min-width:32px;text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand-row">
+    <div class="brand-logo" id="logoBox" onclick="document.getElementById('logoInput').click()">
+      <svg id="logoPlaceholder" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"/></svg>
+      <img id="logoImg" style="display:none">
+    </div>
+    <input type="file" id="logoInput" accept="image/*" style="display:none">
+    <div>
+      <div class="brand-name" id="brandNameDisplay">Tu empresa</div>
+      <div class="brand-sub" id="brandSubDisplay" onclick="openCompanyEditor()">Completar datos de la empresa</div>
+    </div>
+    <button class="install-btn" id="installBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+      Instalar app
+    </button>
+  </div>
+</div>
+
+<div class="tabs" id="tabsBar">
+  <button class="tab-btn active" data-tab="presupuesto" onclick="switchTab('presupuesto')">Presupuesto</button>
+  <button class="tab-btn" data-tab="garantias" onclick="switchTab('garantias')">Garantías</button>
+  <button class="tab-btn" data-tab="stock" onclick="switchTab('stock')">Stock</button>
+  <button class="tab-btn" data-tab="ordenes" onclick="switchTab('ordenes')">Órdenes</button>
+  <button class="tab-btn" data-tab="agenda" onclick="switchTab('agenda')">Agenda</button>
+  <button class="tab-btn" data-tab="tecnicos" onclick="switchTab('tecnicos')">Técnicos</button>
+  <button class="tab-btn" data-tab="balance" onclick="switchTab('balance')">Balance</button>
+</div>
+
+<div class="wrap">
+  <div class="panel">
+
+    <!-- ===== PRESUPUESTO ===== -->
+    <section id="tab-presupuesto">
+      <h2 class="section-title"><span class="dot"></span>Datos del cliente</h2>
+      <div class="row2">
+        <div class="field"><label>Nombre y apellido</label><input type="text" id="pClienteNombre"></div>
+        <div class="field"><label>Teléfono <span class="opt">(WhatsApp)</span></label><input type="tel" id="pClienteTel"></div>
+      </div>
+      <div class="field"><label>Trabajo a realizar</label><textarea id="pTrabajo" placeholder="Ej: Instalación de aire 3000 frigorías"></textarea></div>
+
+      <h2 class="section-title" style="margin-top:18px;"><span class="dot"></span>Materiales y costos</h2>
+      <div id="itemsContainer"></div>
+      <button class="btn btn-ghost btn-block" onclick="addItem()">+ Agregar ítem</button>
+
+      <div class="row2" style="margin-top:16px;">
+        <div class="field"><label>Seña entregada <span class="opt">(opcional)</span></label><input type="text" inputmode="numeric" id="pSenia" placeholder="0" oninput="formatMoneyLive(this); renderTotales()"></div>
+        <div class="field"><label>Válido hasta</label><input type="date" id="pValidez"></div>
+      </div>
+      <div class="field"><label>Garantía del trabajo <span class="opt">(opcional)</span></label>
+        <div class="row2">
+          <input type="number" id="pGarantiaValor" placeholder="Ej: 6">
+          <select id="pGarantiaUnidad"><option value="Meses">Meses</option><option value="Años">Años</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="pEnvioCheck" style="width:18px;height:18px;" onchange="toggleEnvio()"> ¿Incluye envío? <span class="opt">(opcional)</span>
+        </label>
+      </div>
+      <div class="field" id="pEnvioCostoWrap" style="display:none;">
+        <label>Costo de envío</label><input type="text" inputmode="numeric" id="pEnvioCosto" placeholder="0" oninput="formatMoneyLive(this); renderTotales()">
+      </div>
+
+      <div class="totales">
+        <div class="tot-line"><span>Total del trabajo</span><span class="mono" id="totTrabajo">$ 0</span></div>
+        <div class="tot-line" id="totEnvioRow" style="display:none;"><span>Envío</span><span class="mono" id="totEnvio">$ 0</span></div>
+        <div class="tot-line"><span>Seña entregada</span><span class="mono" id="totSenia">$ 0</span></div>
+        <div class="tot-line final"><span>Saldo a pagar</span><span class="mono" id="totSaldo">$ 0</span></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-pdf" style="flex:1" onclick="generarPDF()">📄 PDF</button>
+        <button class="btn btn-wsp" style="flex:1" onclick="enviarWhatsapp()">💬 WhatsApp</button>
+      </div>
+      <button class="btn btn-save btn-block" onclick="limpiarPresupuesto()">Nuevo presupuesto</button>
+    </section>
+
+    <!-- ===== GARANTÍAS ===== -->
+    <section id="tab-garantias" class="hidden">
+      <h2 class="section-title"><span class="dot"></span>Cargar venta / instalación</h2>
+      <div class="row2">
+        <div class="field"><label>Nombre</label><input type="text" id="hNombre"></div>
+        <div class="field"><label>Apellido</label><input type="text" id="hApellido"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>DNI</label><input type="text" id="hDni"></div>
+        <div class="field"><label>Teléfono</label><input type="tel" id="hTel"></div>
+      </div>
+      <div class="field"><label>Dirección</label><input type="text" id="hDireccion"></div>
+      <div class="field"><label>Producto instalado</label><input type="text" id="hProducto"></div>
+      <div class="row2">
+        <div class="field"><label>Condición</label><select id="hTipo"><option value="Nuevo">Nuevo</option><option value="Semi-nuevo">Semi-nuevo</option></select></div>
+        <div class="field"><label>Meses de garantía</label><input type="number" id="hMeses"></div>
+      </div>
+      <div class="field"><label>Fecha de instalación</label><input type="date" id="hFecha"></div>
+      <button class="btn btn-pdf btn-block" onclick="guardarHistorial()">Guardar en historial</button>
+
+      <h2 class="section-title" style="margin-top:22px;"><span class="dot"></span>Clientes cargados</h2>
+      <div class="field"><input type="text" id="hBuscar" placeholder="Nombre, apellido o DNI del cliente" oninput="renderHistorial()"></div>
+      <div id="historialLista"></div>
+    </section>
+
+    <!-- ===== STOCK ===== -->
+    <section id="tab-stock" class="hidden">
+      <h2 class="section-title"><span class="dot"></span>Agregar repuesto / insumo</h2>
+      <div class="row2">
+        <div class="field"><label>Nombre</label><input type="text" id="sNombre" placeholder="Ej: Gas R410 (kg)"></div>
+        <div class="field"><label>Cantidad inicial</label><input type="number" id="sCantidad" placeholder="0"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Costo <span class="opt">(lo que pagás vos)</span></label><input type="text" inputmode="numeric" id="sCosto" placeholder="0" oninput="formatMoneyLive(this)"></div>
+        <div class="field"><label>Precio de venta <span class="opt">(lo que le cobrás al cliente)</span></label><input type="text" inputmode="numeric" id="sPrecioVenta" placeholder="0" oninput="formatMoneyLive(this)"></div>
+      </div>
+      <div class="field"><label>Stock mínimo <span class="opt">(para avisar cuando falta)</span></label><input type="number" id="sMinimo" placeholder="Ej: 2"></div>
+      <button class="btn btn-pdf btn-block" onclick="agregarStock()">Agregar al stock</button>
+
+      <h2 class="section-title" style="margin-top:22px;"><span class="dot"></span>Repuestos e insumos</h2>
+      <div id="stockLista"></div>
+    </section>
+
+    <!-- ===== ÓRDENES DE SERVICIO ===== -->
+    <section id="tab-ordenes" class="hidden">
+      <h2 class="section-title" id="ordenFormTitulo"><span class="dot"></span>Nueva orden de servicio</h2>
+      <div class="row2">
+        <div class="field"><label>Cliente</label><input type="text" id="oCliente"></div>
+        <div class="field"><label>Teléfono</label><input type="tel" id="oTel"></div>
+      </div>
+      <div class="field"><label>Equipo <span class="opt">(marca / modelo)</span></label><input type="text" id="oEquipo" placeholder="Ej: Heladera Whirlpool WRM45"></div>
+      <div class="field"><label>Dirección <span style="color:var(--rojo,#c0392b);">*</span></label><input type="text" id="oDireccion" placeholder="Ej: Av. San Martín 1234, Rosario"></div>
+      <div class="field"><label>Diagnóstico / problema</label><textarea id="oDiagnostico"></textarea></div>
+      <div class="row2">
+        <div class="field"><label>Técnicos asignados <span class="opt">(uno o varios)</span></label><div id="oTecnicoChips" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid #d9e2ea;border-radius:10px;min-height:44px;"></div></div>
+        <div class="field"><label>Estado</label>
+          <select id="oEstado"><option value="Pendiente">Pendiente</option><option value="En proceso">En proceso</option><option value="Terminado">Terminado</option></select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Fecha</label><input type="date" id="oFecha"></div>
+        <div class="field"><label>Hora <span class="opt">(8 a 19hs)</span></label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="oHoraH" style="flex:1;"><option value="">--</option></select>
+            <span style="font-weight:700;">:</span>
+            <select id="oHoraM" style="flex:1;">
+              <option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-pdf btn-block" id="ordenGuardarBtn" onclick="guardarOrden()">Guardar orden</button>
+        <button class="btn btn-ghost" id="ordenCancelarBtn" style="display:none;flex:none;" onclick="cancelarEdicionOrden()">Cancelar</button>
+      </div>
+
+      <h2 class="section-title" style="margin-top:22px;"><span class="dot"></span>Órdenes cargadas</h2>
+      <div id="ordenesProximas"></div>
+      <div id="ordenesLista"></div>
+    </section>
+
+    <!-- ===== AGENDA ===== -->
+    <section id="tab-agenda" class="hidden">
+      <h2 class="section-title"><span class="dot"></span>Agenda de la semana</h2>
+      <div id="agendaLista"></div>
+      <div class="btn-row">
+        <button class="btn btn-pdf" style="flex:1" onclick="agendaPDF()">📄 PDF</button>
+        <button class="btn btn-wsp" style="flex:1" onclick="agendaWhatsapp()">💬 Compartir</button>
+      </div>
+    </section>
+
+    <!-- ===== TÉCNICOS ===== -->
+    <section id="tab-tecnicos" class="hidden">
+      <h2 class="section-title"><span class="dot"></span>Técnicos del equipo</h2>
+      <div class="row2">
+        <div class="field"><label>Nombre del técnico</label><input type="text" id="tecNuevoNombre"></div>
+        <div class="field"><label>WhatsApp <span class="opt">(opc.)</span></label><input type="tel" id="tecNuevoTelefono"></div>
+      </div>
+      <button class="btn btn-pdf btn-block" onclick="agregarTecnico()">+ Agregar técnico</button>
+      <div id="tecnicosChips" style="margin-top:10px;margin-bottom:10px;"></div>
+
+      <h2 class="section-title" style="margin-top:22px;"><span class="dot"></span>Ingresos del día por técnico</h2>
+      <div class="field"><label>Fecha</label><input type="date" id="tecFecha" onchange="renderDiarioTecnicos()"></div>
+      <div id="tecDiarioLista"></div>
+      <button class="btn btn-pdf btn-block" onclick="guardarDiarioTecnicos()">Guardar ingresos del día</button>
+
+      <h2 class="section-title" style="margin-top:22px;"><span class="dot"></span>Resumen semanal</h2>
+      <div id="tecResumenSemanal"></div>
+    </section>
+
+    <!-- ===== BALANCE ===== -->
+    <section id="tab-balance" class="hidden">
+      <h2 class="section-title"><span class="dot"></span>Balance de la semana</h2>
+      <div class="tot-line"><span>Entró (Bruto) <span class="opt">— generado por técnicos</span></span><span class="mono" id="balBruto">$ 0</span></div>
+      <div class="tot-line"><span>Ganancia por repuestos usados <span class="opt">— venta menos costo</span></span><span class="mono" id="balGananciaStock">$ 0</span></div>
+      <div class="field" style="margin-top:12px;">
+        <label>Salió (Gastos de la semana) <span class="opt">— sueldos, combustible, etc, todo junto</span></label>
+        <input type="text" inputmode="numeric" id="balGastos" placeholder="0" oninput="formatMoneyLive(this)">
+      </div>
+      <button class="btn btn-save btn-block" onclick="verResultadoBalance()">Ver resultado</button>
+      <div id="balResultado" style="margin-top:16px;"></div>
+    </section>
+
+  </div>
+</div>
+
+<div style="text-align:center;padding:14px 10px 22px;opacity:.55;font-size:11.5px;color:var(--azul-profundo,#0a2f4e);">
+  Desarrollado por <strong>Uri Tech</strong>
+</div>
+
+<div class="save-toast" id="toast">Guardado</div>
+
+<div id="empresaModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(10,25,40,0.55);z-index:200;align-items:flex-end;justify-content:center;">
+  <div style="background:#fff;border-radius:18px 18px 0 0;padding:22px 20px 26px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;">
+    <h2 class="section-title"><span class="dot"></span>Datos de la empresa</h2>
+    <div class="field"><label>Nombre de la empresa</label><input type="text" id="empNombre" placeholder="Ej: Frion"></div>
+    <div class="field"><label>Dirección <span class="opt">(opcional)</span></label><input type="text" id="empDireccion" placeholder="Ej: Av. San Martín 1234, Rosario"></div>
+    <div class="field"><label>Teléfono <span class="opt">(opcional)</span></label><input type="tel" id="empTelefono" placeholder="Ej: 3413628061"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="cerrarCompanyEditor()">Cancelar</button>
+      <button class="btn btn-save" style="flex:1" onclick="guardarCompanyEditor()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="tecnicoModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(10,25,40,0.55);z-index:200;align-items:flex-end;justify-content:center;">
+  <div style="background:#fff;border-radius:18px 18px 0 0;padding:22px 20px 26px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;">
+    <h2 class="section-title"><span class="dot"></span>Editar WhatsApp</h2>
+    <div class="field"><label id="tecEditarNombreLabel">Técnico</label><input type="tel" id="tecEditarTelefono" placeholder="Ej: 3413628061"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="cerrarTecnicoEditor()">Cancelar</button>
+      <button class="btn btn-save" style="flex:1" onclick="guardarTecnicoEditor()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="licenciaOverlay" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,var(--azul-profundo),var(--azul-medio) 70%);z-index:500;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:#fff;border-radius:18px;padding:26px 22px;width:100%;max-width:380px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3);">
+
+    <div id="licPasoActivar">
+      <div style="width:52px;height:52px;border-radius:12px;background:var(--celeste-suave);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;">🧊</div>
+      <h2 class="section-title" style="justify-content:center;">Empezá gratis</h2>
+      <p style="font-size:13px;color:var(--texto-suave);margin:0 0 16px;">3 días de prueba, sin tarjeta</p>
+      <div class="field"><input type="text" id="licNombreInput" placeholder="Nombre de tu negocio"></div>
+      <div class="field"><input type="tel" id="licContactoInput" placeholder="WhatsApp (opcional)"></div>
+      <button class="btn btn-save btn-block" onclick="activarLicencia()">Empezar prueba gratis</button>
+      <div id="licError" style="color:var(--rojo);font-size:12.5px;margin-top:10px;min-height:16px;"></div>
+      <div style="font-size:12px;color:var(--texto-suave);margin-top:6px;cursor:pointer;text-decoration:underline;" onclick="mostrarPasoCodigo()">¿Ya tenés una cuenta? Ingresá tu código</div>
+    </div>
+
+    <div id="licPasoCodigo" style="display:none;">
+      <div style="width:52px;height:52px;border-radius:12px;background:var(--celeste-suave);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;">🔑</div>
+      <h2 class="section-title" style="justify-content:center;">Ingresar código</h2>
+      <p style="font-size:13px;color:var(--texto-suave);margin:0 0 16px;">El que te dio tu proveedor</p>
+      <div class="field"><input type="text" id="licCodigoInput" placeholder="Código de cliente" style="text-align:center;letter-spacing:1px;"></div>
+      <button class="btn btn-save btn-block" onclick="activarConCodigo()">Ingresar</button>
+      <div id="licErrorCodigo" style="color:var(--rojo);font-size:12.5px;margin-top:10px;min-height:16px;"></div>
+      <div style="font-size:12px;color:var(--texto-suave);margin-top:6px;">¿Problemas con tu código? Contactá a tu proveedor</div>
+    </div>
+
+
+    <div id="licPasoBloqueado" style="display:none;">
+      <div style="width:52px;height:52px;border-radius:12px;background:var(--rojo-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;">⛔</div>
+      <h2 class="section-title" style="justify-content:center;">Cuenta suspendida</h2>
+      <p style="font-size:13px;color:var(--texto-suave);margin:0;">Tu suscripción está vencida o suspendida. Contactá a tu proveedor para reactivarla.</p>
+    </div>
+
+    <div id="licPasoCargando" style="display:none;">
+      <p style="font-size:13px;color:var(--texto-suave);margin:0;">Verificando cuenta...</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ---------- Almacenamiento ---------- */
+const store = {
+  get(k, fallback){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} if(window.guardarEnNube) window.guardarEnNube(k, v); }
+};
+function mostrarToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+function formatearFecha(iso){
+  if(!iso) return '';
+  const [a,m,d] = iso.split('-');
+  return `${d}/${m}/${a}`;
+}
+function hoyISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parseMoney(v){ return parseFloat(String(v||'').replace(/\D/g,'')||0); }
+function formatMoneyLive(el){
+  const digits = el.value.replace(/\D/g,'');
+  el.value = digits ? Number(digits).toLocaleString('es-AR') : '';
+}
+function textoGarantia(){
+  const v = document.getElementById('pGarantiaValor').value;
+  if(!v) return '';
+  const num = parseInt(v);
+  const unidad = document.getElementById('pGarantiaUnidad').value;
+  let label = unidad;
+  if(unidad==='Meses') label = num===1 ? 'Mes' : 'Meses';
+  else label = num===1 ? 'Año' : 'Años';
+  return `${num} ${label}`;
+}
+
+/* ---------- Empresa ---------- */
+let empresa = store.get('empresa_datos', {nombre:'', direccion:'', telefono:'', logo:''});
+function renderEmpresaHeader(){
+  document.getElementById('brandNameDisplay').textContent = empresa.nombre || 'Tu empresa';
+  document.getElementById('brandSubDisplay').textContent = empresa.nombre ? 'Editar datos de la empresa' : 'Completar datos de la empresa';
+  if(empresa.logo){
+    document.getElementById('logoImg').src = empresa.logo;
+    document.getElementById('logoImg').style.display='block';
+    document.getElementById('logoPlaceholder').style.display='none';
+  }
+}
+document.getElementById('logoInput').addEventListener('change', function(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){ empresa.logo = ev.target.result; store.set('empresa_datos', empresa); renderEmpresaHeader(); };
+  reader.readAsDataURL(file);
+});
+function openCompanyEditor(){
+  document.getElementById('empNombre').value = empresa.nombre || '';
+  document.getElementById('empDireccion').value = empresa.direccion || '';
+  document.getElementById('empTelefono').value = empresa.telefono || '';
+  document.getElementById('empresaModalOverlay').style.display = 'flex';
+}
+function cerrarCompanyEditor(){
+  document.getElementById('empresaModalOverlay').style.display = 'none';
+}
+function guardarCompanyEditor(){
+  empresa = {
+    nombre: document.getElementById('empNombre').value.trim(),
+    direccion: document.getElementById('empDireccion').value.trim(),
+    telefono: document.getElementById('empTelefono').value.trim(),
+    logo: empresa.logo || ''
+  };
+  store.set('empresa_datos', empresa); renderEmpresaHeader();
+  cerrarCompanyEditor(); mostrarToast('Datos guardados');
+}
+renderEmpresaHeader();
+
+/* ---------- Tabs ---------- */
+const PLAN_TABS = {
+  basico:  ['presupuesto','ordenes','agenda'],
+  pro:     ['presupuesto','ordenes','agenda','tecnicos','stock'],
+  premium: ['presupuesto','ordenes','agenda','tecnicos','stock','garantias','balance']
+};
+function tabsPermitidos(){
+  const estado = store.get('licencia_estado', '');
+  if(estado === 'prueba') return PLAN_TABS.premium;
+  const plan = store.get('licencia_plan', 'basico');
+  return PLAN_TABS[plan] || PLAN_TABS.basico;
+}
+function switchTab(name){
+  const permitidos = tabsPermitidos();
+  if(!permitidos.includes(name)) name = permitidos[0];
+  ['presupuesto','garantias','stock','ordenes','agenda','tecnicos','balance'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
+  });
+  document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.tab===name));
+  if(name==='garantias') renderHistorial();
+  if(name==='stock') renderStock();
+  if(name==='ordenes') renderOrdenes();
+  if(name==='agenda'){ renderAgenda(); }
+  if(name==='tecnicos'){ if(!document.getElementById('tecFecha').value) document.getElementById('tecFecha').value = hoyISO(); renderTecnicos(); }
+  if(name==='balance') renderBalance();
+}
+function aplicarPlanEnMenu(){
+  const permitidos = tabsPermitidos();
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    b.style.display = permitidos.includes(b.dataset.tab) ? '' : 'none';
+  });
+  const activo = document.querySelector('.tab-btn.active');
+  if(activo && !permitidos.includes(activo.dataset.tab)){
+    switchTab(permitidos[0]);
+  }
+}
+
+/* ================= PRESUPUESTO ================= */
+let items = [];
+function addItem(desc='', cant=1, precio=''){ items.push({desc, cant, precio}); renderItems(); }
+function removeItem(i){ items.splice(i,1); renderItems(); }
+function renderItems(){
+  const c = document.getElementById('itemsContainer'); c.innerHTML = '';
+  items.forEach((it, i)=>{
+    const row = document.createElement('div'); row.className = 'item-row';
+    row.innerHTML = `<input type="text" placeholder="Descripción" value="${it.desc}" oninput="items[${i}].desc=this.value">
+      <input type="number" placeholder="Cant." value="${it.cant}" oninput="items[${i}].cant=this.value; renderTotales()">
+      <input type="text" inputmode="numeric" placeholder="Precio" value="${it.precio}" oninput="formatMoneyLive(this); items[${i}].precio=this.value; renderTotales()">
+      <button class="item-del" onclick="removeItem(${i})">✕</button>`;
+    c.appendChild(row);
+  });
+  renderTotales();
+}
+if(items.length===0) addItem();
+function calcTotal(){ return items.reduce((s,it)=> s + (parseFloat(it.cant||0)*parseMoney(it.precio)), 0); }
+function calcEnvio(){ return document.getElementById('pEnvioCheck').checked ? parseMoney(document.getElementById('pEnvioCosto').value) : 0; }
+function toggleEnvio(){
+  const on = document.getElementById('pEnvioCheck').checked;
+  document.getElementById('pEnvioCostoWrap').style.display = on ? 'block' : 'none';
+  renderTotales();
+}
+function renderTotales(){
+  const total = calcTotal(); const envio = calcEnvio();
+  const senia = parseMoney(document.getElementById('pSenia').value);
+  document.getElementById('totTrabajo').textContent = '$ ' + total.toLocaleString('es-AR');
+  document.getElementById('totEnvioRow').style.display = envio>0 ? 'flex' : 'none';
+  document.getElementById('totEnvio').textContent = '$ ' + envio.toLocaleString('es-AR');
+  document.getElementById('totSenia').textContent = '$ ' + senia.toLocaleString('es-AR');
+  document.getElementById('totSaldo').textContent = '$ ' + (total+envio-senia).toLocaleString('es-AR');
+}
+function limpiarPresupuesto(){
+  items = []; addItem();
+  ['pClienteNombre','pClienteTel','pTrabajo','pSenia','pValidez','pGarantiaValor','pEnvioCosto'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pGarantiaUnidad').value='Meses';
+  document.getElementById('pEnvioCheck').checked=false;
+  document.getElementById('pEnvioCostoWrap').style.display='none';
+  renderTotales();
+}
+function generarPDF(){
+  const { jsPDF } = window.jspdf; const doc = new jsPDF(); const azul=[10,47,78]; let y=20;
+  if(empresa.logo){ try{ doc.addImage(empresa.logo,'JPEG',15,12,20,20);}catch(e){} }
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(...azul);
+  doc.text(empresa.nombre || 'Presupuesto', empresa.logo?40:15, 20);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(90,110,120);
+  if(empresa.direccion){ doc.text(empresa.direccion, empresa.logo?40:15, 26); y=32; }
+  if(empresa.telefono){ doc.text('Tel: '+empresa.telefono, empresa.logo?40:15, y+4); y+=4; }
+  y = Math.max(y,40);
+  doc.setDrawColor(215,232,239); doc.line(15,y,195,y); y+=10;
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...azul); doc.text('PRESUPUESTO',15,y); y+=8;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(30,40,50);
+  doc.text('Cliente: '+(document.getElementById('pClienteNombre').value||'-'),15,y); y+=6;
+  doc.text('Teléfono: '+(document.getElementById('pClienteTel').value||'-'),15,y); y+=6;
+  const trabajoLines = doc.splitTextToSize('Trabajo: '+(document.getElementById('pTrabajo').value||'-'),180);
+  doc.text(trabajoLines,15,y); y += trabajoLines.length*6+4;
+  doc.setDrawColor(215,232,239); doc.line(15,y,195,y); y+=8;
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text('Descripción',15,y); doc.text('Cant.',130,y); doc.text('Precio',155,y); doc.text('Subtotal',175,y);
+  y+=4; doc.setDrawColor(215,232,239); doc.line(15,y,195,y); y+=6;
+  doc.setFont('helvetica','normal');
+  items.forEach(it=>{
+    if(!it.desc && !it.precio) return;
+    const cant=parseFloat(it.cant||0), precio=parseMoney(it.precio), sub=cant*precio;
+    doc.text(String(it.desc||'-').substring(0,45),15,y); doc.text(String(cant),130,y);
+    doc.text('$'+precio.toLocaleString('es-AR'),155,y); doc.text('$'+sub.toLocaleString('es-AR'),175,y); y+=7;
+  });
+  y+=4; doc.setDrawColor(215,232,239); doc.line(15,y,195,y); y+=10;
+  const total = calcTotal(); const envio = calcEnvio(); const senia = parseMoney(document.getElementById('pSenia').value); const saldo = total+envio-senia;
+  doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.text('Total del trabajo: $'+total.toLocaleString('es-AR'),130,y); y+=7;
+  if(envio>0){ doc.text('Envío: $'+envio.toLocaleString('es-AR'),130,y); y+=7; }
+  if(senia>0){ doc.text('Seña entregada: $'+senia.toLocaleString('es-AR'),130,y); y+=7; }
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...azul); doc.text('Saldo a pagar: $'+saldo.toLocaleString('es-AR'),130,y); y+=12;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(90,110,120);
+  const validez = document.getElementById('pValidez').value;
+  if(validez){ doc.text('Válido hasta: '+formatearFecha(validez),15,y); y+=6; }
+  const garantia = textoGarantia();
+  if(garantia){ doc.text('Garantía: '+garantia,15,y); y+=6; }
+  doc.save('presupuesto.pdf');
+}
+function enviarWhatsapp(){
+  const total = calcTotal(); const envio = calcEnvio(); const senia = parseMoney(document.getElementById('pSenia').value); const saldo=total+envio-senia;
+  const nombre = document.getElementById('pClienteNombre').value || 'cliente';
+  const tel = document.getElementById('pClienteTel').value.replace(/\D/g,'');
+  const trabajo = document.getElementById('pTrabajo').value || '';
+  const validez = document.getElementById('pValidez').value;
+  const garantia = textoGarantia();
+  let l = [`Hola ${nombre}! Te paso el presupuesto${empresa.nombre?' de '+empresa.nombre:''}:`];
+  if(trabajo) l.push(`\n🔧 ${trabajo}`);
+  l.push('');
+  items.forEach(it=>{ if(!it.desc && !it.precio) return; const sub=parseFloat(it.cant||0)*parseMoney(it.precio); l.push(`• ${it.desc} x${it.cant} — $${sub.toLocaleString('es-AR')}`); });
+  l.push('');
+  l.push(`Total del trabajo: $${total.toLocaleString('es-AR')}`);
+  if(envio>0) l.push(`Envío: $${envio.toLocaleString('es-AR')}`);
+  if(senia>0) l.push(`Seña entregada: $${senia.toLocaleString('es-AR')}`);
+  l.push(`Saldo a pagar: $${saldo.toLocaleString('es-AR')}`);
+  if(validez) l.push(`\nVálido hasta el ${formatearFecha(validez)}`);
+  if(garantia) l.push(`Garantía: ${garantia}`);
+  const url = tel ? `https://wa.me/${tel}?text=${encodeURIComponent(l.join('\n'))}` : `https://wa.me/?text=${encodeURIComponent(l.join('\n'))}`;
+  window.open(url,'_blank');
+}
+
+/* ================= GARANTÍAS ================= */
+let historial = store.get('historial_garantias', []);
+function calcularVencimiento(fecha, meses){ if(!fecha||!meses) return null; const d=new Date(fecha+'T00:00:00'); d.setMonth(d.getMonth()+parseInt(meses)); return d; }
+function guardarHistorial(){
+  const nombre = document.getElementById('hNombre').value.trim(); const apellido = document.getElementById('hApellido').value.trim();
+  if(!nombre||!apellido){ alert('Completá al menos nombre y apellido.'); return; }
+  historial.unshift({ id:Date.now(), nombre, apellido, dni:document.getElementById('hDni').value.trim(),
+    tel:document.getElementById('hTel').value.trim(), direccion:document.getElementById('hDireccion').value.trim(),
+    producto:document.getElementById('hProducto').value.trim(), tipo:document.getElementById('hTipo').value,
+    meses:document.getElementById('hMeses').value, fecha:document.getElementById('hFecha').value });
+  store.set('historial_garantias', historial);
+  ['hNombre','hApellido','hDni','hTel','hDireccion','hProducto','hMeses','hFecha'].forEach(id=>document.getElementById(id).value='');
+  mostrarToast('Cliente guardado'); renderHistorial();
+}
+function crearGarantiaDesdeOrden(o, meses){
+  const partes = (o.cliente||'').trim().split(' ');
+  const nombre = partes[0] || o.cliente || '';
+  const apellido = partes.slice(1).join(' ') || '-';
+  historial.unshift({ id:Date.now(), nombre, apellido, dni:'', tel:o.tel||'',
+    direccion:o.direccion||'', producto:o.equipo||'', tipo:'Servicio técnico',
+    meses:meses, fecha:o.fecha || hoyISO() });
+  store.set('historial_garantias', historial);
+}
+function eliminarHistorial(id){ if(!confirm('¿Eliminar este registro?')) return; historial = historial.filter(h=>h.id!==id); store.set('historial_garantias', historial); renderHistorial(); }
+function renderHistorial(){
+  const c = document.getElementById('historialLista');
+  const q = (document.getElementById('hBuscar').value || '').trim().toLowerCase();
+  const lista = q ? historial.filter(h =>
+    (h.nombre||'').toLowerCase().includes(q) ||
+    (h.apellido||'').toLowerCase().includes(q) ||
+    (h.dni||'').toLowerCase().includes(q)
+  ) : historial;
+  if(lista.length===0){ c.innerHTML = `<div class="empty">${q ? 'No se encontró ningún cliente con esa búsqueda.' : 'Todavía no cargaste ningún cliente.'}</div>`; return; }
+  const hoy = new Date(); c.innerHTML='';
+  lista.forEach(h=>{
+    const venc = calcularVencimiento(h.fecha, h.meses); let badge='';
+    if(venc){ const vig = venc>=hoy; badge = `<span class="badge ${vig?'verde':'rojo'}">${vig?'Garantía vigente':'Garantía vencida'}</span>`; }
+    const el = document.createElement('div'); el.className='card-item';
+    el.innerHTML = `<div style="flex:1"><div class="card-title">${h.nombre} ${h.apellido}</div>
+      <div class="card-meta">${h.tipo?`<span class="tag">${h.tipo}</span>`:''}${h.producto||''}<br>
+      ${h.dni?`DNI: ${h.dni} · `:''}${h.tel||''}<br>${h.direccion||''}<br>
+      ${h.fecha?`Instalado: ${formatearFecha(h.fecha)}`:''} ${h.meses?`· Garantía: ${h.meses} meses`:''}
+      ${venc?`<br>Vence: ${formatearFecha(venc.toISOString().split('T')[0])}`:''}</div>
+      <div style="margin-top:6px;">${badge}</div></div>
+      <button class="card-del" onclick="eliminarHistorial(${h.id})">✕</button>`;
+    c.appendChild(el);
+  });
+}
+
+/* ================= STOCK ================= */
+let stock = store.get('stock_lista', []);
+let stockMovimientos = store.get('stock_movimientos', []);
+function agregarStock(){
+  const nombre = document.getElementById('sNombre').value.trim();
+  if(!nombre){ alert('Poné el nombre del repuesto.'); return; }
+  stock.unshift({ id:Date.now(), nombre, cantidad: parseFloat(document.getElementById('sCantidad').value||0), minimo: parseFloat(document.getElementById('sMinimo').value||0),
+    costo: parseMoney(document.getElementById('sCosto').value), precioVenta: parseMoney(document.getElementById('sPrecioVenta').value) });
+  store.set('stock_lista', stock);
+  ['sNombre','sCantidad','sMinimo','sCosto','sPrecioVenta'].forEach(id=>document.getElementById(id).value='');
+  mostrarToast('Agregado al stock'); renderStock();
+}
+function cambiarStock(id, delta){
+  const item = stock.find(s=>s.id===id); if(!item) return;
+  item.cantidad = Math.max(0, (item.cantidad||0)+delta);
+  if(delta<0 && (item.costo||item.precioVenta)){
+    stockMovimientos.unshift({ id:Date.now(), nombre:item.nombre, costo:item.costo||0, precioVenta:item.precioVenta||0, ganancia:(item.precioVenta||0)-(item.costo||0), fecha:hoyISO() });
+    store.set('stock_movimientos', stockMovimientos);
+  }
+  store.set('stock_lista', stock); renderStock(); if(typeof renderBalance==='function') renderBalance();
+}
+function eliminarStock(id){ if(!confirm('¿Eliminar este repuesto del stock?')) return; stock = stock.filter(s=>s.id!==id); store.set('stock_lista', stock); renderStock(); }
+function renderStock(){
+  const c = document.getElementById('stockLista');
+  if(stock.length===0){ c.innerHTML = `<div class="empty">Todavía no cargaste repuestos.</div>`; return; }
+  c.innerHTML='';
+  stock.forEach(s=>{
+    const bajo = s.minimo && s.cantidad<=s.minimo;
+    const ganancia = (s.precioVenta||0)-(s.costo||0);
+    const el = document.createElement('div'); el.className='card-item';
+    el.innerHTML = `<div style="flex:1"><div class="card-title">${s.nombre}</div>
+      <div class="card-meta">${s.minimo?`Mínimo: ${s.minimo}<br>`:''}${(s.costo||s.precioVenta)?`Costo: $${(s.costo||0).toLocaleString('es-AR')} · Venta: $${(s.precioVenta||0).toLocaleString('es-AR')} · Ganancia por unidad: $${ganancia.toLocaleString('es-AR')}`:''}</div>
+      ${bajo?`<div style="margin-top:6px;"><span class="badge ambar">Stock bajo</span></div>`:''}</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="stock-qty-btn" onclick="cambiarStock(${s.id},-1)">−</button>
+        <span class="stock-qty">${s.cantidad}</span>
+        <button class="stock-qty-btn" onclick="cambiarStock(${s.id},1)">+</button>
+      </div>
+      <button class="card-del" onclick="eliminarStock(${s.id})">✕</button>`;
+    c.appendChild(el);
+  });
+}
+
+/* ================= TÉCNICOS (lista compartida) ================= */
+let tecnicos = store.get('tecnicos_lista', []);
+let tecnicosTelefonos = store.get('tecnicos_telefonos', {});
+function refrescarSelectTecnicos(){
+  const cont = document.getElementById('oTecnicoChips');
+  const seleccionados = Array.from(cont.querySelectorAll('input:checked')).map(i=>i.value);
+  if(tecnicos.length===0){ cont.innerHTML = '<span class="opt">Cargá técnicos en la pestaña "Técnicos" primero.</span>'; return; }
+  cont.innerHTML = tecnicos.map(t=>`
+    <label style="display:flex;align-items:center;gap:5px;background:#f0f5fa;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;">
+      <input type="checkbox" value="${t}" ${seleccionados.includes(t)?'checked':''}> ${t}
+    </label>`).join('');
+}
+function agregarTecnico(){
+  const nombre = document.getElementById('tecNuevoNombre').value.trim();
+  if(!nombre) return;
+  if(tecnicos.includes(nombre)){ alert('Ese técnico ya está cargado.'); return; }
+  const telefono = document.getElementById('tecNuevoTelefono').value.trim();
+  if(!telefono){ alert('Falta el WhatsApp del técnico. Es obligatorio para poder enviarle los trabajos.'); document.getElementById('tecNuevoTelefono').focus(); return; }
+  tecnicos.push(nombre); store.set('tecnicos_lista', tecnicos);
+  tecnicosTelefonos[nombre] = telefono; store.set('tecnicos_telefonos', tecnicosTelefonos);
+  document.getElementById('tecNuevoNombre').value=''; document.getElementById('tecNuevoTelefono').value='';
+  refrescarSelectTecnicos(); renderTecnicos();
+}
+function eliminarTecnico(nombre){
+  if(!confirm(`¿Eliminar a ${nombre} de la lista de técnicos?`)) return;
+  tecnicos = tecnicos.filter(t=>t!==nombre); store.set('tecnicos_lista', tecnicos);
+  delete tecnicosTelefonos[nombre]; store.set('tecnicos_telefonos', tecnicosTelefonos);
+  refrescarSelectTecnicos(); renderTecnicos();
+}
+let tecnicoEditandoNombre = null;
+function abrirTecnicoEditor(nombre){
+  tecnicoEditandoNombre = nombre;
+  document.getElementById('tecEditarNombreLabel').textContent = `WhatsApp de ${nombre}`;
+  document.getElementById('tecEditarTelefono').value = tecnicosTelefonos[nombre] || '';
+  document.getElementById('tecnicoModalOverlay').style.display = 'flex';
+}
+function cerrarTecnicoEditor(){
+  document.getElementById('tecnicoModalOverlay').style.display = 'none';
+  tecnicoEditandoNombre = null;
+}
+function guardarTecnicoEditor(){
+  if(!tecnicoEditandoNombre) return;
+  const nuevoTel = document.getElementById('tecEditarTelefono').value.trim();
+  if(!nuevoTel){ alert('El WhatsApp es obligatorio. Si querés eliminar al técnico, usá la ✕ en la lista.'); document.getElementById('tecEditarTelefono').focus(); return; }
+  tecnicosTelefonos[tecnicoEditandoNombre] = nuevoTel;
+  store.set('tecnicos_telefonos', tecnicosTelefonos);
+  cerrarTecnicoEditor(); renderTecnicos(); mostrarToast('WhatsApp actualizado');
+}
+refrescarSelectTecnicos();
+(function poblarHorasOrden(){
+  const sel = document.getElementById('oHoraH');
+  for(let h=8; h<=19; h++){ const op=document.createElement('option'); op.value=String(h).padStart(2,'0'); op.textContent=String(h).padStart(2,'0')+'hs'; sel.appendChild(op); }
+})();
+
+/* ================= ÓRDENES DE SERVICIO ================= */
+let ordenes = store.get('ordenes_lista', []);
+let editandoOrdenId = null;
+function guardarOrden(){
+  const cliente = document.getElementById('oCliente').value.trim();
+  if(!cliente){ alert('Poné el nombre del cliente.'); return; }
+  const direccion = document.getElementById('oDireccion').value.trim();
+  if(!direccion){ alert('Falta la dirección. Es obligatoria para que los técnicos sepan a dónde ir.'); document.getElementById('oDireccion').focus(); return; }
+  const hH = document.getElementById('oHoraH').value; const hM = document.getElementById('oHoraM').value;
+  const horaVal = hH ? `${hH}:${hM}` : '';
+  const tecnicosSel = Array.from(document.querySelectorAll('#oTecnicoChips input:checked')).map(i=>i.value);
+  const datos = { cliente, tel:document.getElementById('oTel').value.trim(),
+    equipo:document.getElementById('oEquipo').value.trim(), direccion, diagnostico:document.getElementById('oDiagnostico').value.trim(),
+    tecnicos:tecnicosSel, estado:document.getElementById('oEstado').value,
+    fecha:document.getElementById('oFecha').value, hora:horaVal };
+  if(editandoOrdenId){
+    const idx = ordenes.findIndex(o=>o.id===editandoOrdenId);
+    if(idx>-1) ordenes[idx] = { ...ordenes[idx], ...datos };
+    mostrarToast('Orden actualizada');
+  } else {
+    ordenes.unshift({ id:Date.now(), ...datos });
+    mostrarToast('Orden guardada');
+  }
+  store.set('ordenes_lista', ordenes);
+  cancelarEdicionOrden();
+  renderOrdenes();
+}
+function editarOrden(id){
+  const o = ordenes.find(x=>x.id===id); if(!o) return;
+  editandoOrdenId = id;
+  document.getElementById('oCliente').value = o.cliente||'';
+  document.getElementById('oTel').value = o.tel||'';
+  document.getElementById('oEquipo').value = o.equipo||'';
+  document.getElementById('oDireccion').value = o.direccion||'';
+  document.getElementById('oDiagnostico').value = o.diagnostico||'';
+  document.getElementById('oEstado').value = o.estado||'Pendiente';
+  document.getElementById('oFecha').value = o.fecha||'';
+  const [hH,hM] = (o.hora||'').split(':');
+  document.getElementById('oHoraH').value = hH||'';
+  document.getElementById('oHoraM').value = hM||'00';
+  refrescarSelectTecnicos();
+  (o.tecnicos||[]).forEach(t=>{
+    const cb = document.querySelector(`#oTecnicoChips input[value="${CSS.escape(t)}"]`);
+    if(cb) cb.checked = true;
+  });
+  document.getElementById('ordenFormTitulo').innerHTML = '<span class="dot"></span>Editando orden de servicio';
+  document.getElementById('ordenGuardarBtn').textContent = 'Guardar cambios';
+  document.getElementById('ordenCancelarBtn').style.display = 'block';
+  document.getElementById('tab-ordenes').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function cancelarEdicionOrden(){
+  editandoOrdenId = null;
+  ['oCliente','oTel','oEquipo','oDireccion','oDiagnostico','oFecha'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('oHoraH').value=''; document.getElementById('oHoraM').value='00';
+  refrescarSelectTecnicos(); document.getElementById('oEstado').value='Pendiente';
+  document.getElementById('ordenFormTitulo').innerHTML = '<span class="dot"></span>Nueva orden de servicio';
+  document.getElementById('ordenGuardarBtn').textContent = 'Guardar orden';
+  document.getElementById('ordenCancelarBtn').style.display = 'none';
+}
+function cambiarEstadoOrden(id, estado){
+  const o = ordenes.find(x=>x.id===id); if(!o) return;
+  const eraTerminado = o.estado==='Terminado';
+  o.estado = estado;
+  if(estado==='Terminado' && !eraTerminado && !o.garantiaCreada){
+    const meses = prompt(`Orden de ${o.cliente} finalizada.\n¿Cuántos meses de garantía tiene este trabajo?\n(Dejalo vacío si no aplica)`, '6');
+    if(meses!==null && meses.trim()!==''){
+      crearGarantiaDesdeOrden(o, meses.trim());
+      o.garantiaCreada = true;
+      mostrarToast('Orden finalizada y cargada en Garantías');
+    } else {
+      mostrarToast('Orden finalizada');
+    }
+  }
+  store.set('ordenes_lista', ordenes); renderOrdenes();
+}
+function eliminarOrden(id){ if(!confirm('¿Eliminar esta orden?')) return; ordenes = ordenes.filter(o=>o.id!==id); store.set('ordenes_lista', ordenes); renderOrdenes(); }
+function badgeEstadoClass(estado){ return estado==='Terminado'?'verde':estado==='En proceso'?'ambar':'azul'; }
+function diasHasta(fechaISO){
+  if(!fechaISO) return null;
+  const hoy = new Date(hoyISO()+'T00:00:00'); const f = new Date(fechaISO+'T00:00:00');
+  return Math.round((f-hoy)/86400000);
+}
+function badgeProximidad(fechaISO){
+  const d = diasHasta(fechaISO);
+  if(d===null) return '';
+  if(d<0) return `<span class="badge rojo">VENCIDO</span>`;
+  if(d===0) return `<span class="badge rojo">HOY</span>`;
+  if(d===1) return `<span class="badge ambar">MAÑANA</span>`;
+  if(d<=7) return `<span class="badge azul">EN ${d} DÍAS</span>`;
+  return '';
+}
+function renderOrdenesProximas(){
+  const c = document.getElementById('ordenesProximas');
+  c.innerHTML = '';
+}
+function textoOrden(o){
+  return [`🔧 Orden de trabajo`, `Cliente: ${o.cliente}`, o.tel?`Teléfono: ${o.tel}`:'', `Equipo: ${o.equipo||'-'}`,
+    `Diagnóstico: ${o.diagnostico||'-'}`, `📍 Dirección: ${o.direccion||'Sin dirección'}`,
+    o.fecha?`Fecha: ${formatearFecha(o.fecha)}${o.hora?' - '+o.hora+'hs':''}`:''].filter(Boolean).join('\n');
+}
+function enviarOrdenTecnico(id, tecnico){
+  const o = ordenes.find(x=>x.id===id); if(!o) return;
+  const tel = tecnicosTelefonos[tecnico];
+  if(!tel){ alert(`${tecnico} no tiene WhatsApp cargado. Andá a la pestaña Técnicos y agregáselo.`); return; }
+  const telLimpio = tel.replace(/\D/g,'');
+  window.open(`https://wa.me/${telLimpio}?text=${encodeURIComponent(textoOrden(o))}`, '_blank');
+}
+function crearTarjetaOrden(o){
+  const el = document.createElement('div'); el.className='card-item';
+  const botonesWsp = (o.tecnicos&&o.tecnicos.length) ? `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+    ${o.tecnicos.map(t=>`<button class="btn btn-wsp" style="flex:none;padding:7px 12px;font-size:12.5px;" onclick="enviarOrdenTecnico(${o.id},'${t.replace(/'/g,"\\'")}')">💬 Enviar a ${t}</button>`).join('')}
+  </div>` : '';
+  el.innerHTML = `<div style="flex:1"><div class="card-title">${o.cliente}</div>
+    <div class="card-meta">📍 ${o.direccion||'Sin dirección'}<br>${o.equipo?o.equipo+'<br>':''}${o.diagnostico?o.diagnostico+'<br>':''}
+    ${(o.tecnicos&&o.tecnicos.length)?`Técnicos: ${o.tecnicos.join(', ')} · `:''}${o.fecha?formatearFecha(o.fecha):''} ${o.hora||''}</div>
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"><span class="badge ${badgeEstadoClass(o.estado)}">${o.estado}</span>${badgeProximidad(o.fecha)}</div>
+    ${(o.estado!=='Terminado' && diasHasta(o.fecha)!==null && diasHasta(o.fecha)<0) ? `<div style="margin-top:8px;padding:9px 12px;background:#fee2e2;color:#b91c1c;border-radius:8px;font-size:12.5px;font-weight:700;">⚠️ Recordá dar Finalizado el trabajo para que quede en el historial de Garantías</div>` : ''}
+    <select class="estado-select" style="margin-top:8px;" onchange="cambiarEstadoOrden(${o.id}, this.value)">
+      <option ${o.estado==='Pendiente'?'selected':''}>Pendiente</option>
+      <option ${o.estado==='En proceso'?'selected':''}>En proceso</option>
+      <option ${o.estado==='Terminado'?'selected':''}>Terminado</option>
+    </select>
+    <div style="margin-top:8px;"><button class="btn btn-ghost" style="flex:none;padding:7px 14px;font-size:12.5px;" onclick="editarOrden(${o.id})">✎ Editar</button></div>
+    ${botonesWsp}</div>
+    <button class="card-del" onclick="eliminarOrden(${o.id})">✕</button>`;
+  return el;
+}
+function renderOrdenes(){
+  renderOrdenesProximas();
+  const c = document.getElementById('ordenesLista');
+  if(ordenes.length===0){ c.innerHTML = `<div class="empty">Todavía no cargaste órdenes de servicio.</div>`; return; }
+  c.innerHTML='';
+  const porFechaHora = (a,b)=>{
+    if(!a.fecha && !b.fecha) return 0;
+    if(!a.fecha) return 1;
+    if(!b.fecha) return -1;
+    return a.fecha.localeCompare(b.fecha) || (a.hora||'').localeCompare(b.hora||'');
+  };
+  const activas = ordenes.filter(o=>o.estado!=='Terminado').sort(porFechaHora);
+  const terminadas = ordenes.filter(o=>o.estado==='Terminado').sort((a,b)=>-porFechaHora(a,b));
+
+  if(activas.length===0){
+    c.innerHTML += `<div class="empty">No hay trabajos pendientes ni en proceso.</div>`;
+  } else {
+    activas.forEach(o=> c.appendChild(crearTarjetaOrden(o)) );
+  }
+
+  if(terminadas.length>0){
+    const bloque = document.createElement('div'); bloque.style.marginTop='18px';
+    bloque.innerHTML = `<div style="font-weight:700;color:var(--texto-suave);font-size:14px;cursor:pointer;padding:8px 0;border-top:2px solid var(--borde);" onclick="toggleTerminados()">✅ Terminados (${terminadas.length}) <span class="opt">▾ ver</span></div>
+      <div id="ordenesTerminadasList" style="display:none;"></div>`;
+    c.appendChild(bloque);
+    const contTerminadas = bloque.querySelector('#ordenesTerminadasList');
+    terminadas.forEach(o=> contTerminadas.appendChild(crearTarjetaOrden(o)) );
+  }
+}
+function toggleTerminados(){
+  const el = document.getElementById('ordenesTerminadasList');
+  if(el) el.style.display = el.style.display==='none' ? 'block' : 'none';
+}
+
+/* ================= AGENDA DE LA SEMANA ================= */
+const DIAS_SEMANA = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+function editarOrdenDesdeAgenda(id){
+  switchTab('ordenes');
+  document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.tab==='ordenes'));
+  editarOrden(id);
+}
+function ordenesDelDia(fecha){ return ordenes.filter(o=>o.fecha===fecha).sort((a,b)=>(a.hora||'').localeCompare(b.hora||'')); }
+function diasDeLaSemanaVista(){
+  const dias = [];
+  const hoy = new Date(hoyISO()+'T00:00:00');
+  for(let i=0;i<7;i++){ const d = new Date(hoy); d.setDate(d.getDate()+i); dias.push(d.toISOString().split('T')[0]); }
+  return dias;
+}
+function tituloDia(fechaISO, esHoy){
+  const d = new Date(fechaISO+'T00:00:00');
+  const nombreDia = DIAS_SEMANA[d.getDay()];
+  return esHoy ? `Hoy (${nombreDia} ${formatearFecha(fechaISO)})` : `${nombreDia} ${formatearFecha(fechaISO)}`;
+}
+function renderAgenda(){
+  const c = document.getElementById('agendaLista');
+  const dias = diasDeLaSemanaVista();
+  const hoy = hoyISO();
+  c.innerHTML='';
+  dias.forEach(fecha=>{
+    const lista = ordenesDelDia(fecha);
+    const bloque = document.createElement('div'); bloque.style.marginBottom='18px';
+    bloque.innerHTML = `<div style="font-weight:700;color:var(--azul-medio);font-size:14.5px;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--borde);">${tituloDia(fecha, fecha===hoy)}</div>`;
+    if(lista.length===0){
+      bloque.innerHTML += `<div class="empty" style="padding:10px 0;">Sin visitas cargadas.</div>`;
+    } else {
+      lista.forEach(o=>{
+        const el = document.createElement('div'); el.className='card-item';
+        const botonesWsp = (o.tecnicos&&o.tecnicos.length) ? `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+          ${o.tecnicos.map(t=>`<button class="btn btn-wsp" style="flex:none;padding:7px 12px;font-size:12.5px;" onclick="enviarOrdenTecnico(${o.id},'${t.replace(/'/g,"\\'")}')">💬 Enviar a ${t}</button>`).join('')}
+        </div>` : '';
+        el.innerHTML = `<div style="flex:1"><div class="card-title">${o.hora?o.hora+'hs · ':''}${(o.tecnicos&&o.tecnicos.length)?o.tecnicos.join(', '):'Sin técnico'}</div>
+          <div class="card-meta">${o.cliente} — ${o.equipo||''}<br>📍 ${o.direccion||'Sin dirección'}<br>${o.diagnostico||''}</div>
+          <div style="margin-top:8px;"><button class="btn btn-ghost" style="flex:none;padding:7px 12px;font-size:12.5px;" onclick="editarOrdenDesdeAgenda(${o.id})">✎ Cambiar técnico</button></div>
+          ${botonesWsp}</div>`;
+        bloque.appendChild(el);
+      });
+    }
+    c.appendChild(bloque);
+  });
+}
+function textoAgenda(){
+  const dias = diasDeLaSemanaVista(); const hoy = hoyISO();
+  let l = [`📅 Agenda de la semana`, ''];
+  dias.forEach(fecha=>{
+    const lista = ordenesDelDia(fecha);
+    l.push(`— ${tituloDia(fecha, fecha===hoy)} —`);
+    if(lista.length===0){ l.push('Sin visitas.'); }
+    lista.forEach(o=>{ l.push(`🔧 ${(o.tecnicos&&o.tecnicos.length)?o.tecnicos.join(', '):'Sin técnico'}${o.hora?' - '+o.hora+'hs':''}`); l.push(`${o.equipo||o.diagnostico||''} — Cliente: ${o.cliente}`); l.push(`📍 ${o.direccion||'Sin dirección'}`); });
+    l.push('');
+  });
+  return l.join('\n');
+}
+function agendaWhatsapp(){
+  window.open(`https://wa.me/?text=${encodeURIComponent(textoAgenda())}`, '_blank');
+}
+function agendaPDF(){
+  const dias = diasDeLaSemanaVista(); const hoy = hoyISO();
+  const { jsPDF } = window.jspdf; const doc = new jsPDF(); const azul=[10,47,78]; let y=20;
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(...azul);
+  doc.text('Agenda de la semana', 15, y); y+=12;
+  dias.forEach(fecha=>{
+    if(y>270){ doc.addPage(); y=20; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...azul);
+    doc.text(tituloDia(fecha, fecha===hoy), 15, y); y+=8;
+    const lista = ordenesDelDia(fecha);
+    doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(30,40,50);
+    if(lista.length===0){ doc.text('Sin visitas.',15,y); y+=8; }
+    lista.forEach(o=>{
+      if(y>270){ doc.addPage(); y=20; }
+      doc.setFont('helvetica','bold'); doc.text(`${o.hora?o.hora+'hs - ':''}${(o.tecnicos&&o.tecnicos.length)?o.tecnicos.join(', '):'Sin técnico'}`,15,y); y+=6;
+      doc.setFont('helvetica','normal');
+      const lines = doc.splitTextToSize(`${o.cliente} — ${o.equipo||''} ${o.diagnostico?'('+o.diagnostico+')':''}\n📍 ${o.direccion||'Sin dirección'}`, 180);
+      doc.text(lines,15,y); y += lines.length*6+4;
+    });
+    y+=6;
+  });
+  doc.save('agenda_semana.pdf');
+}
+
+/* ================= TÉCNICOS: pagos diarios ================= */
+let pagosTecnicos = store.get('pagos_tecnicos', []); // {id, tecnico, fecha, monto}
+function renderTecnicos(){
+  const chips = document.getElementById('tecnicosChips');
+  chips.innerHTML = tecnicos.length ? tecnicos.map(t=>`<span class="tec-chip">${t}${tecnicosTelefonos[t]?' 📱':' <span style="color:#c0392b;font-size:11px;">(sin WhatsApp)</span>'} <button onclick="abrirTecnicoEditor('${t.replace(/'/g,"\\'")}')" style="color:var(--azul-medio);">✎</button><button onclick="eliminarTecnico('${t.replace(/'/g,"\\'")}')">✕</button></span>`).join('') : `<div class="empty">Todavía no cargaste técnicos.</div>`;
+  renderDiarioTecnicos();
+  renderResumenSemanal();
+}
+function renderDiarioTecnicos(){
+  const fecha = document.getElementById('tecFecha').value || hoyISO();
+  const c = document.getElementById('tecDiarioLista');
+  if(tecnicos.length===0){ c.innerHTML = `<div class="empty">Cargá técnicos arriba primero.</div>`; return; }
+  c.innerHTML='';
+  tecnicos.forEach(t=>{
+    const existente = pagosTecnicos.find(p=>p.tecnico===t && p.fecha===fecha);
+    const row = document.createElement('div'); row.className='tec-daily-row';
+    row.innerHTML = `<label>${t}</label>
+      <input type="text" inputmode="numeric" placeholder="Ingreso $0" data-tec="${t}" data-tipo="ingreso" value="${existente&&existente.monto?Number(existente.monto).toLocaleString('es-AR'):''}" oninput="formatMoneyLive(this)">
+      <input type="text" inputmode="numeric" placeholder="Gasto en materiales $0 (opc.)" data-tec="${t}" data-tipo="gasto" value="${existente&&existente.gasto?Number(existente.gasto).toLocaleString('es-AR'):''}" oninput="formatMoneyLive(this)">`;
+    c.appendChild(row);
+  });
+}
+function guardarDiarioTecnicos(){
+  const fecha = document.getElementById('tecFecha').value || hoyISO();
+  tecnicos.forEach(t=>{
+    const monto = parseMoney(document.querySelector(`#tecDiarioLista input[data-tec="${t}"][data-tipo="ingreso"]`).value);
+    const gasto = parseMoney(document.querySelector(`#tecDiarioLista input[data-tec="${t}"][data-tipo="gasto"]`).value);
+    let existente = pagosTecnicos.find(p=>p.tecnico===t && p.fecha===fecha);
+    if(existente){ existente.monto = monto; existente.gasto = gasto; }
+    else if(monto>0 || gasto>0){ pagosTecnicos.push({id:Date.now()+Math.random(), tecnico:t, fecha, monto, gasto}); }
+  });
+  store.set('pagos_tecnicos', pagosTecnicos);
+  mostrarToast('Ingresos guardados'); renderResumenSemanal();
+}
+function inicioSemana(fecha){
+  const d = new Date(fecha+'T00:00:00'); const dia = d.getDay(); const diff = (dia===0?-6:1-dia);
+  d.setDate(d.getDate()+diff); return d;
+}
+function renderResumenSemanal(){
+  const fecha = document.getElementById('tecFecha').value || hoyISO();
+  const inicio = inicioSemana(fecha); const fin = new Date(inicio); fin.setDate(fin.getDate()+6);
+  const c = document.getElementById('tecResumenSemanal');
+  if(tecnicos.length===0){ c.innerHTML=''; return; }
+  let html = `<div class="card-meta" style="margin-bottom:8px;">Semana del ${formatearFecha(inicio.toISOString().split('T')[0])} al ${formatearFecha(fin.toISOString().split('T')[0])}</div>`;
+  tecnicos.forEach((t,idx)=>{
+    const pagosSemana = pagosTecnicos.filter(p=>p.tecnico===t && new Date(p.fecha+'T00:00:00')>=inicio && new Date(p.fecha+'T00:00:00')<=fin)
+      .sort((a,b)=>a.fecha.localeCompare(b.fecha));
+    const total = pagosSemana.reduce((s,p)=>s+parseFloat(p.monto||0)-parseFloat(p.gasto||0),0);
+    const detalleId = `histTec${idx}`;
+    html += `<div class="resumen-row" style="cursor:pointer;" onclick="toggleHistorialTecnico('${detalleId}')"><span>${t} <span class="opt" style="font-size:11px;">▾ ver días</span></span><span class="mono">$ ${total.toLocaleString('es-AR')}</span></div>`;
+    html += `<div id="${detalleId}" style="display:none;padding:4px 0 8px 10px;border-left:2px solid var(--borde);margin-bottom:6px;">`;
+    if(pagosSemana.length===0){
+      html += `<div class="opt" style="font-size:12.5px;">Sin movimientos cargados esta semana.</div>`;
+    } else {
+      pagosSemana.forEach(p=>{
+        const netoDia = parseFloat(p.monto||0)-parseFloat(p.gasto||0);
+        html += `<div style="font-size:12.5px;color:var(--texto-suave);padding:3px 0;">
+          <strong>${formatearFecha(p.fecha)}</strong> — Ingreso: $${parseFloat(p.monto||0).toLocaleString('es-AR')}
+          ${p.gasto?` · Materiales: $${parseFloat(p.gasto).toLocaleString('es-AR')}`:''}
+          · Neto: $${netoDia.toLocaleString('es-AR')}</div>`;
+      });
+    }
+    html += `</div>`;
+  });
+  c.innerHTML = html;
+}
+function toggleHistorialTecnico(id){
+  const el = document.getElementById(id);
+  el.style.display = el.style.display==='none' ? 'block' : 'none';
+}
+
+/* ================= BALANCE ================= */
+function totalBrutoSemanaActual(){
+  const inicio = inicioSemana(hoyISO()); const fin = new Date(inicio); fin.setDate(fin.getDate()+6);
+  return pagosTecnicos.filter(p=> new Date(p.fecha+'T00:00:00')>=inicio && new Date(p.fecha+'T00:00:00')<=fin)
+    .reduce((s,p)=>s+parseFloat(p.monto||0)-parseFloat(p.gasto||0),0);
+}
+function totalGananciaStockSemanaActual(){
+  const inicio = inicioSemana(hoyISO()); const fin = new Date(inicio); fin.setDate(fin.getDate()+6);
+  return stockMovimientos.filter(m=> new Date(m.fecha+'T00:00:00')>=inicio && new Date(m.fecha+'T00:00:00')<=fin)
+    .reduce((s,m)=>s+parseFloat(m.ganancia||0),0);
+}
+function renderBalance(){
+  document.getElementById('balBruto').textContent = '$ ' + totalBrutoSemanaActual().toLocaleString('es-AR');
+  document.getElementById('balGananciaStock').textContent = '$ ' + totalGananciaStockSemanaActual().toLocaleString('es-AR');
+  document.getElementById('balResultado').innerHTML='';
+}
+function verResultadoBalance(){
+  const bruto = totalBrutoSemanaActual() + totalGananciaStockSemanaActual();
+  const gastos = parseMoney(document.getElementById('balGastos').value);
+  const neto = bruto - gastos;
+  document.getElementById('balResultado').innerHTML = `
+    <div class="totales">
+      <div class="tot-line"><span>Salió (Gastos)</span><span class="mono">$ ${gastos.toLocaleString('es-AR')}</span></div>
+      <div class="tot-line final"><span>Neto</span><span class="mono">$ ${neto.toLocaleString('es-AR')}</span></div>
+    </div>`;
+}
+
+renderHistorial();
+
+/* ================= SINCRONIZACIÓN CON LA NUBE ================= */
+// Esta función la llama el script de Firebase (más abajo) apenas confirma
+// quién es el cliente, para traer sus datos guardados en la nube y
+// mostrarlos acá, sin importar desde qué celular/PC/tablet entre.
+window.aplicarDatosNube = function(appData){
+  if(!appData) return;
+  if(appData.empresa_datos){ empresa = appData.empresa_datos; renderEmpresaHeader(); }
+  if(appData.historial_garantias){ historial = appData.historial_garantias; }
+  if(appData.stock_lista){ stock = appData.stock_lista; }
+  if(appData.stock_movimientos){ stockMovimientos = appData.stock_movimientos; }
+  if(appData.tecnicos_lista){ tecnicos = appData.tecnicos_lista; }
+  if(appData.tecnicos_telefonos){ tecnicosTelefonos = appData.tecnicos_telefonos; }
+  if(appData.ordenes_lista){ ordenes = appData.ordenes_lista; }
+  if(appData.pagos_tecnicos){ pagosTecnicos = appData.pagos_tecnicos; }
+  refrescarSelectTecnicos();
+  renderHistorial();
+  renderStock();
+  renderTecnicos();
+  renderOrdenes();
+  if(typeof renderAgenda==='function') renderAgenda();
+  renderBalance();
+  mostrarToast('Datos actualizados');
+};
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwdbkXC8Rx3D-LdZhsMMcqCYS5CQ1jEVY",
+    authDomain: "gestion-refrigeracion.firebaseapp.com",
+    projectId: "gestion-refrigeracion",
+    storageBucket: "gestion-refrigeracion.firebasestorage.app",
+    messagingSenderId: "936147054968",
+    appId: "1:936147054968:web:56be6d5fb844a62d86988d"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const licStore = {
+    get(k, fallback){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+
+  /* ---------- Sincronización de datos del cliente (presupuestos, stock, etc.) ---------- */
+  let nubeCache = {};
+  let guardarNubeTimeout = null;
+  window.guardarEnNube = function(key, value){
+    if(!window.clienteIdActual) return; // todavía no sabemos quién es el cliente
+    nubeCache[key] = value;
+    clearTimeout(guardarNubeTimeout);
+    guardarNubeTimeout = setTimeout(async () => {
+      const payload = nubeCache; nubeCache = {};
+      const campos = {};
+      Object.keys(payload).forEach(k => { campos['appData.' + k] = payload[k]; });
+      try{
+        await updateDoc(doc(db, 'clientes', window.clienteIdActual), campos);
+      } catch(err){
+        console.error('No se pudo guardar en la nube:', err);
+      }
+    }, 900);
+  };
+
+  async function cargarDatosNube(clienteId){
+    try{
+      const snap = await getDoc(doc(db, 'clientes', clienteId));
+      if(snap.exists()){
+        const d = snap.data();
+        if(d.appData && window.aplicarDatosNube) window.aplicarDatosNube(d.appData);
+      }
+    } catch(err){
+      console.error('No se pudieron cargar los datos de la nube:', err);
+    }
+  }
+
+  function mostrarPaso(paso){
+    document.getElementById('licPasoActivar').style.display = paso==='activar' ? 'block' : 'none';
+    document.getElementById('licPasoCodigo').style.display = paso==='codigo' ? 'block' : 'none';
+    document.getElementById('licPasoBloqueado').style.display = paso==='bloqueado' ? 'block' : 'none';
+    document.getElementById('licPasoCargando').style.display = paso==='cargando' ? 'block' : 'none';
+  }
+  window.mostrarPasoCodigo = function(){ mostrarPaso('codigo'); }
+  window.mostrarPasoActivar = function(){ mostrarPaso('activar'); }
+
+  function estaVencido(fechaVencimiento){
+    if(!fechaVencimiento) return true;
+    const venc = fechaVencimiento.toDate ? fechaVencimiento.toDate() : new Date(fechaVencimiento);
+    return venc.getTime() < Date.now();
+  }
+
+  function aplicarEstadoCliente(data, clienteId){
+    const bloqueado = data.estado === 'suspendido' || estaVencido(data.fechaVencimiento);
+    if(bloqueado){
+      window.clienteIdActual = null;
+      document.getElementById('licenciaOverlay').style.display = 'flex';
+      mostrarPaso('bloqueado');
+      return;
+    }
+    licStore.set('licencia_plan', data.plan || 'basico');
+    licStore.set('licencia_estado', data.estado || '');
+    document.getElementById('licenciaOverlay').style.display = 'none';
+    if(window.aplicarPlanEnMenu) window.aplicarPlanEnMenu();
+    if(clienteId){
+      window.clienteIdActual = clienteId;
+      cargarDatosNube(clienteId);
+    }
+  }
+
+  async function verificarLicencia(){
+    // Siempre pedimos el código al abrir el link: no hay ingreso automático
+    // guardado de una vez para siempre. El único dato que persiste es el
+    // último código usado, para prellenar el campo (comodidad), pero
+    // SIEMPRE hay que confirmar tocando "Ingresar".
+    document.getElementById('licenciaOverlay').style.display = 'flex';
+    const ultimoCodigo = licStore.get('licencia_clienteId', '');
+    if(ultimoCodigo){
+      document.getElementById('licCodigoInput').value = ultimoCodigo;
+      mostrarPaso('codigo');
+    } else {
+      mostrarPaso('activar');
+    }
+  }
+
+  window.activarLicencia = async function(){
+    const nombre = document.getElementById('licNombreInput').value.trim();
+    const contacto = document.getElementById('licContactoInput').value.trim();
+    if(!nombre){
+      document.getElementById('licError').textContent = 'Poné el nombre de tu negocio';
+      return;
+    }
+    document.getElementById('licError').textContent = '';
+    mostrarPaso('cargando');
+    try{
+      const inicio = new Date();
+      const vencimiento = new Date();
+      vencimiento.setDate(vencimiento.getDate() + 3);
+      const nuevoDoc = await addDoc(collection(db, 'clientes'), {
+        nombreNegocio: nombre,
+        contacto: contacto,
+        plan: 'basico',
+        estado: 'prueba',
+        fechaInicio: Timestamp.fromDate(inicio),
+        fechaVencimiento: Timestamp.fromDate(vencimiento)
+      });
+      licStore.set('licencia_clienteId', nuevoDoc.id);
+      const data = { nombreNegocio: nombre, contacto, plan:'basico', estado:'prueba', fechaInicio: Timestamp.fromDate(inicio), fechaVencimiento: Timestamp.fromDate(vencimiento) };
+      licStore.set('licencia_cache', data);
+      aplicarEstadoCliente(data, nuevoDoc.id);
+    } catch(err){
+      mostrarPaso('activar');
+      document.getElementById('licError').textContent = 'Error de conexión, probá de nuevo';
+    }
+  }
+
+  window.activarConCodigo = async function(){
+    const codigo = document.getElementById('licCodigoInput').value.trim();
+    if(!codigo){
+      document.getElementById('licErrorCodigo').textContent = 'Pegá el código que te dieron';
+      return;
+    }
+    document.getElementById('licErrorCodigo').textContent = '';
+    mostrarPaso('cargando');
+    try{
+      const snap = await getDoc(doc(db, 'clientes', codigo));
+      if(!snap.exists()){
+        mostrarPaso('codigo');
+        document.getElementById('licErrorCodigo').textContent = 'Código inválido';
+        return;
+      }
+      licStore.set('licencia_clienteId', codigo);
+      const data = snap.data();
+      licStore.set('licencia_cache', data);
+      aplicarEstadoCliente(data, codigo);
+    } catch(err){
+      mostrarPaso('codigo');
+      document.getElementById('licErrorCodigo').textContent = 'Error de conexión, probá de nuevo';
+    }
+  }
+
+  verificarLicencia();
+</script>
+<script>
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+<script>
+  // Botón "Instalar app" propio, al lado del logo
+  let deferredInstallPrompt = null;
+  const installBtn = document.getElementById('installBtn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if(installBtn){ installBtn.style.display = 'flex'; }
+  });
+
+  if(installBtn){
+    installBtn.addEventListener('click', async () => {
+      if(!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      installBtn.style.display = 'none';
+    });
+  }
+
+  // Si ya está instalada (o se instala), ocultar el botón para siempre
+  window.addEventListener('appinstalled', () => {
+    if(installBtn){ installBtn.style.display = 'none'; }
+    deferredInstallPrompt = null;
+  });
+
+  // Si el navegador detecta que ya corre como app instalada, ni mostrarlo
+  if(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true){
+    if(installBtn){ installBtn.style.display = 'none'; }
+  }
+</script>
+</body>
+</html>
