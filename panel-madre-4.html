@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f1417">
+<link rel="manifest" href="manifest-panel.json">
+<link rel="icon" href="icono-512.png">
+<link rel="apple-touch-icon" href="icono-512.png">
+<title>Panel Madre · Gestión Refrigeración</title>
+<style>
+  :root{
+    --bg: #0f1417;
+    --bg-elev: #161d22;
+    --bg-card: #1b2429;
+    --line: #2a353c;
+    --text: #e7edf0;
+    --text-dim: #8fa1a8;
+    --accent: #ff8a3d;
+    --accent-dim: #7a4626;
+    --ok: #4fd48a;
+    --ok-bg: #16302380;
+    --warn: #ffcd4a;
+    --warn-bg: #35300f80;
+    --bad: #ff6b6b;
+    --bad-bg: #3a181880;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .login-box{
+    width:100%;
+    max-width:340px;
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:32px 24px;
+    text-align:center;
+  }
+  .login-box .icon{
+    width:52px;height:52px;border-radius:12px;
+    background:linear-gradient(145deg,var(--accent),#c85f1e);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 18px;
+    font-size:24px;
+  }
+  .brand-logo{width:100%;max-width:280px;height:auto;display:block;margin:0 auto 14px;border-radius:10px;}
+  header .brand-logo{width:auto;max-width:100%;height:56px;object-fit:contain;margin:0 auto 8px;}
+  .login-box h1{font-size:19px;margin:0 0 4px;}
+  .login-box p{color:var(--text-dim);font-size:13px;margin:0 0 22px;}
+  .login-box input{
+    width:100%;padding:13px 14px;border-radius:9px;
+    border:1px solid var(--line);background:var(--bg-elev);
+    color:var(--text);font-size:15px;margin-bottom:12px;
+    letter-spacing:2px;text-align:center;
+  }
+  .login-box input:focus{outline:none;border-color:var(--accent);}
+  .login-box button{
+    width:100%;padding:13px;border-radius:9px;border:none;
+    background:var(--accent);color:#1a0e04;font-weight:700;font-size:14px;
+    cursor:pointer;
+  }
+  .login-err{color:var(--bad);font-size:12px;margin-top:10px;min-height:16px;}
+
+  /* ---------- APP ---------- */
+  #app{display:none;}
+  header{
+    position:sticky;top:0;z-index:10;
+    background:rgba(15,20,23,0.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+    padding:16px 18px;
+  }
+  .header-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  header h1{font-size:16px;margin:0;font-weight:700;}
+  header .sub{font-size:11.5px;color:var(--text-dim);margin-top:2px;}
+  .btn-icon{
+    background:var(--bg-card);border:1px solid var(--line);color:var(--text-dim);
+    width:34px;height:34px;border-radius:9px;font-size:15px;cursor:pointer;
+  }
+
+  main{padding:16px;max-width:720px;margin:0 auto;padding-bottom:100px;}
+
+  .summary{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;
+  }
+  .summary .card{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:12px;
+    padding:12px 10px;text-align:center;cursor:pointer;transition:all .15s ease;user-select:none;
+  }
+  .summary .card:active{transform:scale(0.96);}
+  .summary .card.selected{border-color:currentColor;box-shadow:0 0 0 2px currentColor inset;}
+  .summary .card.ok.selected{color:var(--ok);}
+  .summary .card.warn.selected{color:var(--warn);}
+  .summary .card.bad.selected{color:var(--bad);}
+  .summary .card .num{font-size:22px;font-weight:800;font-family:var(--mono);}
+  .summary .card .lbl{font-size:10.5px;color:var(--text-dim);margin-top:2px;text-transform:uppercase;letter-spacing:0.4px;}
+  .summary .card.ok .num{color:var(--ok);}
+  .summary .card.warn .num{color:var(--warn);}
+  .summary .card.bad .num{color:var(--bad);}
+
+  .search{
+    width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);
+    background:var(--bg-card);color:var(--text);font-size:14px;margin-bottom:14px;
+  }
+  .search:focus{outline:none;border-color:var(--accent);}
+
+  .empty{
+    text-align:center;color:var(--text-dim);padding:60px 20px;font-size:13.5px;
+  }
+
+  .client-card{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:13px;
+    padding:14px 16px;margin-bottom:10px;
+  }
+  .client-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .client-name{font-size:15.5px;font-weight:700;}
+  .client-code{
+    font-size:11.5px;color:var(--text-dim);margin-top:6px;padding:6px 8px;
+    background:rgba(255,255,255,.04);border-radius:8px;cursor:pointer;
+    font-family:var(--mono);word-break:break-all;
+  }
+  .client-code:active{background:rgba(255,255,255,.1);}
+  .client-code .code-value{color:var(--text);font-weight:600;}
+  .client-plan{
+    font-size:10.5px;color:var(--text-dim);text-transform:uppercase;
+    letter-spacing:0.5px;margin-top:2px;font-family:var(--mono);
+  }
+  .badge{
+    font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;
+    white-space:nowrap;
+  }
+  .badge.activo{color:var(--ok);background:var(--ok-bg);}
+  .badge.prueba{color:var(--warn);background:var(--warn-bg);}
+  .badge.suspendido{color:var(--bad);background:var(--bad-bg);}
+  .badge.vencido{color:var(--bad);background:var(--bad-bg);}
+
+  .client-meta{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:12px;padding-top:12px;border-top:1px solid var(--line);
+  }
+  .days-left{font-size:13px;font-family:var(--mono);}
+  .days-left.ok{color:var(--ok);}
+  .days-left.warn{color:var(--warn);}
+  .days-left.bad{color:var(--bad);}
+
+  .client-actions{display:flex;gap:8px;}
+  .client-actions button{
+    font-size:12px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);
+    background:var(--bg-elev);color:var(--text);cursor:pointer;font-weight:600;
+  }
+  .client-actions button.suspend{color:var(--bad);}
+  .client-actions button.activate{color:var(--ok);}
+
+  .fab{
+    position:fixed;bottom:22px;right:18px;
+    width:56px;height:56px;border-radius:50%;
+    background:var(--accent);color:#1a0e04;border:none;
+    font-size:26px;box-shadow:0 6px 18px rgba(255,138,61,0.35);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+
+  /* modal */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
+    z-index:50;align-items:flex-end;justify-content:center;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--bg-card);border-top:1px solid var(--line);
+    border-radius:18px 18px 0 0;width:100%;max-width:480px;
+    padding:20px 18px calc(20px + env(safe-area-inset-bottom));
+    max-height:88vh;overflow-y:auto;
+  }
+  .modal h2{font-size:16px;margin:0 0 16px;}
+  .field{margin-bottom:13px;}
+  .field label{
+    display:block;font-size:11.5px;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;
+  }
+  .field input,.field select{
+    width:100%;padding:12px;border-radius:9px;border:1px solid var(--line);
+    background:var(--bg-elev);color:var(--text);font-size:14.5px;
+  }
+  .field input:focus,.field select:focus{outline:none;border-color:var(--accent);}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .modal-actions button{
+    flex:1;padding:13px;border-radius:9px;border:none;font-weight:700;font-size:14px;cursor:pointer;
+  }
+  .modal-actions .cancel{background:var(--bg-elev);color:var(--text-dim);border:1px solid var(--line);}
+  .modal-actions .save{background:var(--accent);color:#1a0e04;}
+  .modal-actions .delete{background:var(--bad-bg);color:var(--bad);}
+  .modal-err{color:var(--bad);font-size:12px;margin-top:8px;}
+  .modal-close{
+    position:absolute;top:14px;right:16px;background:none;border:none;
+    color:var(--text-dim);font-size:20px;cursor:pointer;
+  }
+  .modal{position:relative;}
+
+  .toast{
+    position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+    background:var(--bg-elev);border:1px solid var(--line);color:var(--text);
+    padding:11px 18px;border-radius:10px;font-size:13px;z-index:60;
+    opacity:0;transition:opacity 0.25s;pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <img src="logo-uritech.png" alt="Uri Tech" class="brand-logo">
+    <h1>Panel Madre</h1>
+    <p>Gestión Refrigeración · acceso restringido</p>
+    <input type="password" id="pin-input" placeholder="PIN" maxlength="12" autocomplete="off">
+    <button onclick="tryLogin()">Entrar</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <img src="logo-uritech.png" alt="Uri Tech" class="brand-logo">
+    <div class="header-row">
+      <div>
+        <h1>Panel Madre</h1>
+        <div class="sub" id="proj-sub">gestión-refrigeración</div>
+      </div>
+      <button class="btn-icon" onclick="logout()" title="Salir">⏻</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="summary">
+      <div class="card ok" id="filtro-activo" onclick="setFiltroEstado('activo')"><div class="num" id="count-activo">–</div><div class="lbl">Activos</div></div>
+      <div class="card warn" id="filtro-porvencer" onclick="setFiltroEstado('porvencer')"><div class="num" id="count-porvencer">–</div><div class="lbl">Por vencer</div></div>
+      <div class="card bad" id="filtro-suspendido" onclick="setFiltroEstado('suspendido')"><div class="num" id="count-suspendido">–</div><div class="lbl">Suspendidos</div></div>
+    </div>
+
+    <input type="text" class="search" id="search" placeholder="Buscar cliente..." oninput="renderClients()">
+
+    <div id="clients-list"></div>
+    <div class="empty" id="empty-msg" style="display:none;">No hay clientes cargados todavía. Tocá el botón + para agregar el primero.</div>
+  </main>
+
+  <button class="fab" onclick="openModal()">+</button>
+</div>
+
+<!-- MODAL AGREGAR/EDITAR -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modal-title">Nuevo cliente</h2>
+
+    <div class="field" id="codigo-row" style="display:none;">
+      <label>Código de cliente</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="f-codigo" readonly style="font-family:var(--mono);font-size:13px;">
+        <button onclick="copiarCodigo()" style="flex-shrink:0;padding:0 16px;border-radius:9px;border:1px solid var(--line);background:var(--bg-elev);color:var(--accent);font-weight:700;cursor:pointer;">Copiar</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Nombre del negocio</label>
+      <input type="text" id="f-nombre" placeholder="Ej: Frion">
+    </div>
+
+    <div class="field">
+      <label>WhatsApp / contacto</label>
+      <input type="text" id="f-contacto" placeholder="Ej: 11 2345 6789">
+    </div>
+
+    <div class="field">
+      <label>Plan</label>
+      <select id="f-plan">
+        <option value="basico">Básico</option>
+        <option value="pro">Pro</option>
+        <option value="premium">Premium</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Estado</label>
+      <select id="f-estado">
+        <option value="prueba">Prueba (3 días)</option>
+        <option value="activo">Activo</option>
+        <option value="suspendido">Suspendido</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Fecha de inicio</label>
+      <input type="date" id="f-inicio">
+    </div>
+
+    <div class="field">
+      <label>Duración</label>
+      <select id="f-duracion" onchange="calcVencimiento()">
+        <option value="3">Prueba · 3 días</option>
+        <option value="30" selected>Mensual · 30 días</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Fecha de vencimiento</label>
+      <input type="date" id="f-vencimiento">
+    </div>
+
+    <div class="modal-err" id="modal-err"></div>
+
+    <div class="modal-actions">
+      <button class="cancel" onclick="closeModal()">Cancelar</button>
+      <button class="save" onclick="saveClient()">Guardar</button>
+    </div>
+    <div class="modal-actions" id="delete-row" style="display:none;">
+      <button class="delete" onclick="deleteClient()">Eliminar cliente</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc,
+    doc, Timestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwdbkXC8Rx3D-LdZhsMMcqCYS5CQ1jEVY",
+    authDomain: "gestion-refrigeracion.firebaseapp.com",
+    projectId: "gestion-refrigeracion",
+    storageBucket: "gestion-refrigeracion.firebasestorage.app",
+    messagingSenderId: "936147054968",
+    appId: "1:936147054968:web:56be6d5fb844a62d86988d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const clientsCol = collection(db, "clientes");
+
+  // ---------- LOGIN (PIN simple, solo para no dejar el panel abierto a cualquiera) ----------
+  const PIN = "1234"; // <-- Eze: cambiá este número por el que quieras
+  window.tryLogin = function(){
+    const val = document.getElementById('pin-input').value;
+    if(val === PIN){
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      sessionStorage.setItem('panelmadre_ok','1');
+      loadClients();
+    } else {
+      document.getElementById('login-err').textContent = 'PIN incorrecto';
+    }
+  }
+  window.logout = function(){
+    sessionStorage.removeItem('panelmadre_ok');
+    location.reload();
+  }
+  if(sessionStorage.getItem('panelmadre_ok') === '1'){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadClients();
+  }
+  document.getElementById('pin-input').addEventListener('keydown', e=>{
+    if(e.key === 'Enter') tryLogin();
+  });
+
+  // ---------- ESTADO ----------
+  let clients = [];
+  let editingId = null;
+
+  function toDate(ts){
+    if(!ts) return null;
+    if(ts.toDate) return ts.toDate();
+    return new Date(ts);
+  }
+
+  function daysLeft(vencimiento){
+    const now = new Date();
+    const v = toDate(vencimiento);
+    if(!v) return null;
+    const diff = Math.ceil((v - now) / (1000*60*60*24));
+    return diff;
+  }
+
+  let filtroEstado = null; // null = mostrar todos. 'activo' | 'porvencer' | 'suspendido'
+
+  window.setFiltroEstado = function(estado){
+    filtroEstado = (filtroEstado === estado) ? null : estado; // tocar de nuevo la misma = quitar filtro
+    renderClients();
+  }
+
+  function estadoDelCliente(c){
+    const dl = daysLeft(c.fechaVencimiento);
+    if(c.estado === 'suspendido') return 'suspendido';
+    if(dl !== null && dl < 0) return 'suspendido';
+    if(dl !== null && dl <= 5) return 'porvencer';
+    return 'activo';
+  }
+
+  window.loadClients = async function(){
+    const snap = await getDocs(clientsCol);
+    clients = [];
+    snap.forEach(d => clients.push({ id: d.id, ...d.data() }));
+    renderClients();
+  }
+
+  function planLabel(p){
+    return { basico:'Básico', pro:'Pro', premium:'Premium' }[p] || p;
+  }
+
+  window.renderClients = function(){
+    const search = document.getElementById('search').value.toLowerCase();
+    const list = document.getElementById('clients-list');
+    list.innerHTML = '';
+
+    let activos=0, porVencer=0, suspendidos=0;
+
+    const filtered = clients
+      .filter(c => (c.nombreNegocio||'').toLowerCase().includes(search))
+      .filter(c => !filtroEstado || estadoDelCliente(c) === filtroEstado)
+      .sort((a,b) => {
+        const da = daysLeft(a.fechaVencimiento) ?? 9999;
+        const db_ = daysLeft(b.fechaVencimiento) ?? 9999;
+        return da - db_;
+      });
+
+    clients.forEach(c => {
+      const dl = daysLeft(c.fechaVencimiento);
+      if(c.estado === 'suspendido') suspendidos++;
+      else if(dl !== null && dl < 0) suspendidos++;
+      else if(dl !== null && dl <= 5) porVencer++;
+      else activos++;
+    });
+
+    document.getElementById('count-activo').textContent = activos;
+    document.getElementById('count-porvencer').textContent = porVencer;
+    document.getElementById('count-suspendido').textContent = suspendidos;
+
+    document.getElementById('filtro-activo').classList.toggle('selected', filtroEstado === 'activo');
+    document.getElementById('filtro-porvencer').classList.toggle('selected', filtroEstado === 'porvencer');
+    document.getElementById('filtro-suspendido').classList.toggle('selected', filtroEstado === 'suspendido');
+
+    document.getElementById('empty-msg').style.display = filtered.length ? 'none' : 'block';
+    document.getElementById('empty-msg').textContent = filtroEstado
+      ? 'No hay clientes en esta categoría.'
+      : 'No hay clientes cargados todavía. Tocá el botón + para agregar el primero.';
+
+    filtered.forEach(c => {
+      const dl = daysLeft(c.fechaVencimiento);
+      let dlClass = 'ok', dlText = '';
+      // estadoReal: lo que realmente corresponde mostrar, combinando el campo
+      // "estado" (suspendido a mano) con la fecha de vencimiento real.
+      let estadoReal = c.estado;
+
+      if(c.estado === 'suspendido'){
+        dlText = 'Suspendido';
+        dlClass = 'bad';
+      } else if(dl === null){
+        dlText = 'Sin fecha';
+        dlClass = 'warn';
+      } else if(dl < 0){
+        dlText = `Venció hace ${Math.abs(dl)}d`;
+        dlClass = 'bad';
+        estadoReal = 'vencido';
+      } else if(dl <= 5){
+        dlText = `Vence en ${dl}d`;
+        dlClass = 'warn';
+      } else {
+        dlText = `${dl} días restantes`;
+        dlClass = 'ok';
+      }
+
+      const card = document.createElement('div');
+      card.className = 'client-card';
+      card.innerHTML = `
+        <div class="client-top">
+          <div>
+            <div class="client-name">${escapeHtml(c.nombreNegocio || 'Sin nombre')}</div>
+            <div class="client-plan">${planLabel(c.plan)}</div>
+          </div>
+          <span class="badge ${estadoReal}">${estadoReal}</span>
+        </div>
+        <div class="client-code" onclick="copiarCodigo('${c.id}')" title="Tocar para copiar solo el código">
+          Código: <span class="code-value">${c.id}</span> 📋
+        </div>
+        <div class="client-meta">
+          <span class="days-left ${dlClass}">${dlText}</span>
+          <div class="client-actions">
+            <button onclick="copiarLinkCliente('${c.id}')">🔗 Link</button>
+            ${c.estado === 'suspendido'
+              ? `<button class="activate" onclick="quickActivate('${c.id}')">Reactivar</button>`
+              : `<button class="suspend" onclick="quickSuspend('${c.id}')">Suspender</button>`
+            }
+            <button onclick="openModal('${c.id}')">Editar</button>
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  const URL_APP_CLIENTES = 'https://ezequielromano2024-prog.github.io/refrigeracion-app/';
+
+  window.copiarLinkCliente = function(codigo){
+    const link = URL_APP_CLIENTES + '?code=' + codigo;
+    navigator.clipboard.writeText(link).then(() => {
+      showToast('Link copiado, listo para pegar en WhatsApp');
+    }).catch(() => {
+      showToast('No se pudo copiar, mantené presionado para seleccionar el texto');
+    });
+  }
+
+  window.copiarCodigo = function(codigo){
+    navigator.clipboard.writeText(codigo).then(() => {
+      showToast('Código copiado: ' + codigo);
+    }).catch(() => {
+      showToast('No se pudo copiar, mantené presionado para seleccionar el texto');
+    });
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  // ---------- ACCIONES RÁPIDAS ----------
+  window.quickSuspend = async function(id){
+    if(!confirm('¿Suspender este cliente?')) return;
+    await updateDoc(doc(db,'clientes',id), { estado: 'suspendido' });
+    showToast('Cliente suspendido');
+    await loadClients();
+  }
+
+  window.quickActivate = async function(id){
+    const nuevaVenc = new Date();
+    nuevaVenc.setDate(nuevaVenc.getDate() + 30);
+    await updateDoc(doc(db,'clientes',id), {
+      estado: 'activo',
+      fechaInicio: Timestamp.fromDate(new Date()),
+      fechaVencimiento: Timestamp.fromDate(nuevaVenc)
+    });
+    showToast('Cliente reactivado por 30 días');
+    await loadClients();
+  }
+
+  // ---------- MODAL ----------
+  window.calcVencimiento = function(){
+    const inicio = document.getElementById('f-inicio').value;
+    const dur = parseInt(document.getElementById('f-duracion').value);
+    if(!inicio) return;
+    const d = new Date(inicio + 'T00:00:00');
+    d.setDate(d.getDate() + dur);
+    document.getElementById('f-vencimiento').value = d.toISOString().split('T')[0];
+  }
+
+  document.getElementById('f-inicio').addEventListener('change', calcVencimiento);
+
+  window.openModal = function(id){
+    editingId = id || null;
+    document.getElementById('modal-err').textContent = '';
+    const overlay = document.getElementById('modal-overlay');
+
+    if(id){
+      const c = clients.find(x => x.id === id);
+      document.getElementById('modal-title').textContent = 'Editar cliente';
+      document.getElementById('codigo-row').style.display = 'block';
+      document.getElementById('f-codigo').value = id;
+      document.getElementById('f-nombre').value = c.nombreNegocio || '';
+      document.getElementById('f-contacto').value = c.contacto || '';
+      document.getElementById('f-plan').value = c.plan || 'basico';
+      document.getElementById('f-estado').value = c.estado || 'prueba';
+      const inicio = toDate(c.fechaInicio);
+      const venc = toDate(c.fechaVencimiento);
+      document.getElementById('f-inicio').value = inicio ? inicio.toISOString().split('T')[0] : '';
+      document.getElementById('f-vencimiento').value = venc ? venc.toISOString().split('T')[0] : '';
+      document.getElementById('delete-row').style.display = 'flex';
+    } else {
+      document.getElementById('modal-title').textContent = 'Nuevo cliente';
+      document.getElementById('codigo-row').style.display = 'none';
+      document.getElementById('f-nombre').value = '';
+      document.getElementById('f-contacto').value = '';
+      document.getElementById('f-plan').value = 'basico';
+      document.getElementById('f-estado').value = 'prueba';
+      const hoy = new Date();
+      document.getElementById('f-inicio').value = hoy.toISOString().split('T')[0];
+      document.getElementById('f-duracion').value = '3';
+      calcVencimiento();
+      document.getElementById('delete-row').style.display = 'none';
+    }
+    overlay.classList.add('open');
+  }
+
+  window.closeModal = function(){
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  window.copiarCodigo = function(){
+    const input = document.getElementById('f-codigo');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+      showToast('Código copiado');
+    }).catch(() => {
+      showToast('Tocá y mantené para copiar');
+    });
+  }
+
+  window.saveClient = async function(){
+    const nombre = document.getElementById('f-nombre').value.trim();
+    const contacto = document.getElementById('f-contacto').value.trim();
+    const plan = document.getElementById('f-plan').value;
+    const estado = document.getElementById('f-estado').value;
+    const inicio = document.getElementById('f-inicio').value;
+    const venc = document.getElementById('f-vencimiento').value;
+
+    if(!nombre){
+      document.getElementById('modal-err').textContent = 'Poné el nombre del negocio';
+      return;
+    }
+    if(!inicio || !venc){
+      document.getElementById('modal-err').textContent = 'Faltan las fechas';
+      return;
+    }
+
+    const data = {
+      nombreNegocio: nombre,
+      contacto: contacto,
+      plan: plan,
+      estado: estado,
+      fechaInicio: Timestamp.fromDate(new Date(inicio + 'T00:00:00')),
+      fechaVencimiento: Timestamp.fromDate(new Date(venc + 'T00:00:00'))
+    };
+
+    try{
+      if(editingId){
+        await updateDoc(doc(db,'clientes',editingId), data);
+        showToast('Cliente actualizado');
+      } else {
+        await addDoc(clientsCol, data);
+        showToast('Cliente agregado');
+      }
+      closeModal();
+      await loadClients();
+    } catch(err){
+      document.getElementById('modal-err').textContent = 'Error al guardar: ' + err.message;
+    }
+  }
+
+  window.deleteClient = async function(){
+    if(!editingId) return;
+    if(!confirm('¿Eliminar este cliente definitivamente?')) return;
+    await deleteDoc(doc(db,'clientes',editingId));
+    showToast('Cliente eliminado');
+    closeModal();
+    await loadClients();
+  }
+
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw-panel.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
