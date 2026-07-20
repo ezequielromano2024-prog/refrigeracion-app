@@ -354,20 +354,23 @@
       <h2 class="section-title" style="justify-content:center;">Empezá gratis</h2>
       <p style="font-size:13px;color:var(--texto-suave);margin:0 0 16px;">3 días de prueba, sin tarjeta</p>
       <div class="field"><input type="text" id="licNombreInput" placeholder="Nombre de tu negocio"></div>
-      <div class="field"><input type="tel" id="licContactoInput" placeholder="WhatsApp (opcional)"></div>
+      <div class="field"><input type="password" id="licPassInput" placeholder="Creá una contraseña"></div>
+      <div class="field"><input type="password" id="licPassInput2" placeholder="Repetí la contraseña"></div>
       <button class="btn btn-save btn-block" onclick="activarLicencia()">Empezar prueba gratis</button>
       <div id="licError" style="color:var(--rojo);font-size:12.5px;margin-top:10px;min-height:16px;"></div>
-      <div style="font-size:12px;color:var(--texto-suave);margin-top:6px;cursor:pointer;text-decoration:underline;" onclick="mostrarPasoCodigo()">¿Ya tenés una cuenta? Ingresá tu código</div>
+      <div style="font-size:12px;color:var(--rojo);margin-top:6px;font-weight:600;">⚠️ Guardá bien tu contraseña, no se puede recuperar</div>
+      <div style="font-size:12px;color:var(--texto-suave);margin-top:10px;cursor:pointer;text-decoration:underline;" onclick="mostrarPasoCodigo()">¿Ya tenés una cuenta? Ingresá acá</div>
     </div>
 
     <div id="licPasoCodigo" style="display:none;">
       <div style="width:52px;height:52px;border-radius:12px;background:var(--celeste-suave);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;">🔑</div>
-      <h2 class="section-title" style="justify-content:center;">Ingresar código</h2>
-      <p style="font-size:13px;color:var(--texto-suave);margin:0 0 16px;">El que te dio tu proveedor</p>
-      <div class="field"><input type="text" id="licCodigoInput" placeholder="Código de cliente" style="text-align:center;letter-spacing:1px;"></div>
+      <h2 class="section-title" style="justify-content:center;">Ingresar</h2>
+      <p style="font-size:13px;color:var(--texto-suave);margin:0 0 16px;">Nombre de tu negocio y contraseña</p>
+      <div class="field"><input type="text" id="licNombreLoginInput" placeholder="Nombre de tu negocio"></div>
+      <div class="field"><input type="password" id="licPassLoginInput" placeholder="Contraseña"></div>
       <button class="btn btn-save btn-block" onclick="activarConCodigo()">Ingresar</button>
       <div id="licErrorCodigo" style="color:var(--rojo);font-size:12.5px;margin-top:10px;min-height:16px;"></div>
-      <div style="font-size:12px;color:var(--texto-suave);margin-top:6px;">Guardá bien este código, es tu acceso a la app</div>
+      <div style="font-size:12px;color:var(--texto-suave);margin-top:10px;cursor:pointer;text-decoration:underline;" onclick="mostrarPasoActivar()">¿No tenés cuenta? Empezá gratis</div>
     </div>
 
 
@@ -1115,7 +1118,7 @@ window.aplicarDatosNube = function(appData){
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAwdbkXC8Rx3D-LdZhsMMcqCYS5CQ1jEVY",
@@ -1204,48 +1207,58 @@ window.aplicarDatosNube = function(appData){
     // SIEMPRE hay que confirmar tocando "Ingresar".
     document.getElementById('licenciaOverlay').style.display = 'flex';
 
-    // Si el link trae ?code=XXXX (el proveedor se lo mandó directo al cliente),
-    // priorizamos ese código por sobre cualquier cosa guardada antes.
-    const params = new URLSearchParams(window.location.search);
-    const codigoDeLink = params.get('code');
-    if(codigoDeLink){
-      document.getElementById('licCodigoInput').value = codigoDeLink;
-      mostrarPaso('codigo');
-      return;
-    }
+    // Si el link trae ?negocio=XXXX (poco común, solo por compatibilidad vieja),
+    // lo ignoramos: ahora el ingreso es siempre con nombre + contraseña.
 
-    const ultimoCodigo = licStore.get('licencia_clienteId', '');
-    if(ultimoCodigo){
-      document.getElementById('licCodigoInput').value = ultimoCodigo;
+    const ultimoUsuario = licStore.get('licencia_usuario', '');
+    const ultimaPass = licStore.get('licencia_pass', '');
+    if(ultimoUsuario && ultimaPass){
+      document.getElementById('licNombreLoginInput').value = ultimoUsuario;
+      document.getElementById('licPassLoginInput').value = ultimaPass;
       mostrarPaso('codigo');
     } else {
       mostrarPaso('activar');
     }
   }
 
+  function normalizarUsuario(nombre){
+    return nombre.trim().toLowerCase().replace(/\s+/g,' ');
+  }
+
   window.activarLicencia = async function(){
     const nombre = document.getElementById('licNombreInput').value.trim();
-    const contacto = document.getElementById('licContactoInput').value.trim();
+    const pass = document.getElementById('licPassInput').value;
+    const pass2 = document.getElementById('licPassInput2').value;
     if(!nombre){
       document.getElementById('licError').textContent = 'Poné el nombre de tu negocio';
       return;
     }
+    if(!pass || pass.length < 4){
+      document.getElementById('licError').textContent = 'La contraseña tiene que tener al menos 4 caracteres';
+      return;
+    }
+    if(pass !== pass2){
+      document.getElementById('licError').textContent = 'Las contraseñas no coinciden';
+      return;
+    }
     document.getElementById('licError').textContent = '';
     mostrarPaso('cargando');
+    const usuario = normalizarUsuario(nombre);
     try{
+      const q = query(collection(db, 'clientes'), where('usuario', '==', usuario));
+      const existentes = await getDocs(q);
+      if(!existentes.empty){
+        mostrarPaso('activar');
+        document.getElementById('licError').textContent = 'Ese nombre ya está en uso. Si es tu cuenta, tocá "¿Ya tenés una cuenta?" abajo.';
+        return;
+      }
       const inicio = new Date();
       const vencimiento = new Date();
       vencimiento.setDate(vencimiento.getDate() + 3);
-      const nuevoDoc = await addDoc(collection(db, 'clientes'), {
-        nombreNegocio: nombre,
-        contacto: contacto,
-        plan: 'basico',
-        estado: 'prueba',
-        fechaInicio: Timestamp.fromDate(inicio),
-        fechaVencimiento: Timestamp.fromDate(vencimiento)
-      });
-      licStore.set('licencia_clienteId', nuevoDoc.id);
-      const data = { nombreNegocio: nombre, contacto, plan:'basico', estado:'prueba', fechaInicio: Timestamp.fromDate(inicio), fechaVencimiento: Timestamp.fromDate(vencimiento) };
+      const data = { nombreNegocio: nombre, usuario, password: pass, plan:'basico', estado:'prueba', fechaInicio: Timestamp.fromDate(inicio), fechaVencimiento: Timestamp.fromDate(vencimiento) };
+      const nuevoDoc = await addDoc(collection(db, 'clientes'), data);
+      licStore.set('licencia_usuario', usuario);
+      licStore.set('licencia_pass', pass);
       licStore.set('licencia_cache', data);
       aplicarEstadoCliente(data, nuevoDoc.id);
     } catch(err){
@@ -1255,24 +1268,34 @@ window.aplicarDatosNube = function(appData){
   }
 
   window.activarConCodigo = async function(){
-    const codigo = document.getElementById('licCodigoInput').value.trim();
-    if(!codigo){
-      document.getElementById('licErrorCodigo').textContent = 'Pegá el código que te dieron';
+    const nombre = document.getElementById('licNombreLoginInput').value.trim();
+    const pass = document.getElementById('licPassLoginInput').value;
+    if(!nombre || !pass){
+      document.getElementById('licErrorCodigo').textContent = 'Completá nombre y contraseña';
       return;
     }
     document.getElementById('licErrorCodigo').textContent = '';
     mostrarPaso('cargando');
+    const usuario = normalizarUsuario(nombre);
     try{
-      const snap = await getDoc(doc(db, 'clientes', codigo));
-      if(!snap.exists()){
+      const q = query(collection(db, 'clientes'), where('usuario', '==', usuario));
+      const resultado = await getDocs(q);
+      if(resultado.empty){
         mostrarPaso('codigo');
-        document.getElementById('licErrorCodigo').textContent = 'Código inválido';
+        document.getElementById('licErrorCodigo').textContent = 'Usuario o contraseña incorrectos';
         return;
       }
-      licStore.set('licencia_clienteId', codigo);
-      const data = snap.data();
+      const docEncontrado = resultado.docs[0];
+      const data = docEncontrado.data();
+      if(data.password !== pass){
+        mostrarPaso('codigo');
+        document.getElementById('licErrorCodigo').textContent = 'Usuario o contraseña incorrectos';
+        return;
+      }
+      licStore.set('licencia_usuario', usuario);
+      licStore.set('licencia_pass', pass);
       licStore.set('licencia_cache', data);
-      aplicarEstadoCliente(data, codigo);
+      aplicarEstadoCliente(data, docEncontrado.id);
     } catch(err){
       mostrarPaso('codigo');
       document.getElementById('licErrorCodigo').textContent = 'Error de conexión, probá de nuevo';
